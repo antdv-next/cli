@@ -3,7 +3,7 @@
     "type": "module",
     "version": "0.0.0",
     "packageManager": "pnpm@11.9.0",
-    "description": "CLI tool for querying antd knowledge and analyzing antd usage in projects",
+    "description": "CLI tool for querying antdv-next knowledge and analyzing antdv-next usage in projects",
     "license": "MIT",
     "homepage": "https://github.com/antdv-next/cli#readme",
     "repository": {
