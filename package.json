@@ -22,12 +22,12 @@
         "vue"
     ],
     "exports": {
-        ".": "./dist/cli.mjs",
+        ".": "./dist/index.mjs",
         "./package.json": "./package.json"
     },
-    "types": "./dist/cli.d.mts",
+    "types": "./dist/index.d.mts",
     "bin": {
-        "antdv": "./bin/cli.js"
+        "antdv": "./bin/antdv.js"
     },
     "files": [
         "data",
