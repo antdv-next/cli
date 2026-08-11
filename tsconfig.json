@@ -12,7 +12,8 @@
         },
         "resolveJsonModule": true,
         "types": [
-            "node"
+            "node",
+            "tsdown/client"
         ],
         "noUnusedLocals": false,
         "noUnusedParameters": false,
