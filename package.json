@@ -4,15 +4,14 @@
     "version": "0.0.0",
     "packageManager": "pnpm@11.9.0",
     "description": "CLI tool for querying antd knowledge and analyzing antd usage in projects",
-    "author": "lonewolfyx",
     "license": "MIT",
-    "homepage": "https://github.com/lonewolfyx/antdv-next-cli#readme",
+    "homepage": "https://github.com/antdv-next/cli#readme",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/lonewolfyx/antdv-next-cli.git"
+        "url": "git+https://github.com/antdv-next/cli.git"
     },
     "bugs": {
-        "url": "https://github.com/lonewolfyx/antdv-next-cli/issues"
+        "url": "https://github.com/antdv-next/cli/issues"
     },
     "keywords": [
         "antdv-next",
