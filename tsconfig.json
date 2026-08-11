@@ -1,0 +1,22 @@
+{
+    "extends": "@lonewolfyx/tsconfig/tsconfig.lib.json",
+    "compilerOptions": {
+        "baseUrl": "./",
+        "paths": {
+            "@/*": [
+                "./src/*"
+            ],
+            "#/*": [
+                "./src/types/*",
+                "./types/*"
+            ]
+        },
+        "resolveJsonModule": true,
+        "types": [
+            "node"
+        ],
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "declarationMap": false
+    }
+}

@@ -1,0 +1,70 @@
+{
+    "name": "@antdv-next/cli",
+    "type": "module",
+    "version": "0.0.0",
+    "packageManager": "pnpm@11.9.0",
+    "description": "CLI tool for querying antd knowledge and analyzing antd usage in projects",
+    "author": "lonewolfyx",
+    "license": "MIT",
+    "homepage": "https://github.com/lonewolfyx/antdv-next-cli#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/lonewolfyx/antdv-next-cli.git"
+    },
+    "bugs": {
+        "url": "https://github.com/lonewolfyx/antdv-next-cli/issues"
+    },
+    "keywords": [
+        "antdv-next",
+        "ant-design-vue",
+        "antdv",
+        "cli",
+        "component",
+        "vue"
+    ],
+    "exports": {
+        ".": "./dist/cli.mjs",
+        "./package.json": "./package.json"
+    },
+    "types": "./dist/cli.d.mts",
+    "bin": {
+        "antdv": "./bin/cli.js"
+    },
+    "files": [
+        "data",
+        "dist"
+    ],
+    "scripts": {
+        "dev": "tsdown --watch",
+        "build": "tsdown",
+        "lint": "eslint .",
+        "lint:fix": "eslint --fix",
+        "prepublishOnly": "pnpm build",
+        "prepare": "simple-git-hooks"
+    },
+    "devDependencies": {
+        "@antfu/eslint-config": "^9.3.0",
+        "@lonewolfyx/tsconfig": "^0.0.6",
+        "@types/node": "^26.2.0",
+        "eslint": "^10.8.1",
+        "jiti": "^2.7.0",
+        "lint-staged": "^17.3.0",
+        "picocolors": "^1.1.1",
+        "simple-git-hooks": "^2.13.1",
+        "tsdown": "^0.22.14",
+        "tsx": "^4.23.12",
+        "typescript": "^6.0.3",
+        "verify-git-commit": "^0.0.1"
+    },
+    "simple-git-hooks": {
+        "pre-commit": "npx lint-staged",
+        "commit-msg": "npx verify-git-commit"
+    },
+    "lint-staged": {
+        "*": "eslint --fix"
+    },
+    "publishConfig": {
+        "registry": "https://registry.npmjs.org",
+        "access": "public"
+    }
+}
