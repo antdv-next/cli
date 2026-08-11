@@ -1,4 +1,4 @@
-import { createMain, defineCommand, showUsage } from 'citty'
+import { createMain, defineCommand, renderUsage, showUsage } from 'citty'
 import { createHelpBanner } from '@/utils/banner.ts'
 import { description, name, version } from '../package.json' with { type: 'json' }
 
@@ -49,4 +49,10 @@ const main = defineCommand({
     },
 })
 
-createMain(main)({})
+createMain(main)({
+    async showUsage(cmd, parent) {
+        console.log(createHelpBanner(CLI_VERSION))
+
+        console.log(await renderUsage(cmd, parent))
+    },
+})
