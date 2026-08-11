@@ -41,6 +41,11 @@
         "prepublishOnly": "pnpm build",
         "prepare": "simple-git-hooks"
     },
+    "dependencies": {
+        "@clack/prompts": "^1.7.0",
+        "citty": "^0.2.2",
+        "pkg-types": "^2.3.1"
+    },
     "devDependencies": {
         "@antfu/eslint-config": "^9.3.0",
         "@lonewolfyx/tsconfig": "^0.0.6",
