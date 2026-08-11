@@ -11,7 +11,6 @@ const main = defineCommand({
         version,
         description,
     },
-
     setup() {
         console.log(createHelpBanner(CLI_VERSION))
     },
