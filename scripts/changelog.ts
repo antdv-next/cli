@@ -99,7 +99,13 @@ function collectListItems(lines: string[]): string[] {
 }
 
 function assertValidDate(date: string, context: string): void {
-    const [year, month, day] = date.split('-').map(Number)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        throw new Error(`Invalid release date ${date} in ${context}`)
+    }
+
+    const year = Number(date.slice(0, 4))
+    const month = Number(date.slice(5, 7))
+    const day = Number(date.slice(8, 10))
     const parsedDate = new Date(Date.UTC(year, month - 1, day))
 
     if (
