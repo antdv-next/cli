@@ -3,12 +3,19 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { parse } from 'semver'
 import { x } from 'tinyexec'
 
 interface ChangelogRecord {
     version: string
     majorVersion: string
 }
+
+interface MinorChangelogFile extends ChangelogRecord {
+    changelog: ChangelogRecord[]
+}
+
+type ChangelogFile = ChangelogRecord[] | MinorChangelogFile
 
 interface ParsedTag {
     record: ChangelogRecord
@@ -20,27 +27,25 @@ interface ParsedTag {
 interface MinorGroup {
     major: number
     minor: number
-    highestPatch: number
-    changelog: ChangelogRecord[]
+    tags: ParsedTag[]
 }
 
-const TARGET_MAJOR = 1
+const MAJOR_VERSIONS = [1, 2, 3, 4] as const
 const REMOTE_URL = 'https://github.com/antdv-next/antdv-next.git'
 const TAG_PREFIX = 'antdv-next@'
-const TAG_PATTERN = 'refs/tags/antdv-next@1.*'
 const OUTPUT_DIRECTORY = fileURLToPath(new URL('../data', import.meta.url))
-const SEMVER_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Z-]+(?:\.[0-9A-Z-]+)*)?(?:\+[0-9A-Z-]+(?:\.[0-9A-Z-]+)*)?$/i
 const REMOTE_TAG_PATTERN = /^[0-9a-f]+\s+refs\/tags\/(.+)$/i
-const MINOR_FILE_PATTERN = /^v1\.(\d+)\.(\d+)\.json$/
+const MINOR_FILE_PATTERN = /^v(\d+)\.(\d+)\.(\d+)\.json$/
 
-async function fetchTags(): Promise<ParsedTag[]> {
+async function fetchTags(majorVersion: number): Promise<ParsedTag[]> {
+    const tagPattern = `refs/tags/${TAG_PREFIX}${majorVersion}.*`
     const { stdout } = await x('git', [
         'ls-remote',
         '--tags',
         '--refs',
         '--sort=v:refname',
         REMOTE_URL,
-        TAG_PATTERN,
+        tagPattern,
     ], {
         throwOnError: true,
         nodeOptions: {
@@ -49,14 +54,10 @@ async function fetchTags(): Promise<ParsedTag[]> {
     })
 
     const lines = stdout.split(/\r?\n/).filter(Boolean)
-    if (lines.length === 0) {
-        throw new Error(`No tags matched ${TAG_PATTERN}`)
-    }
-
-    return lines.map(parseRemoteTag)
+    return lines.map(line => parseRemoteTag(line, majorVersion))
 }
 
-function parseRemoteTag(line: string): ParsedTag {
+function parseRemoteTag(line: string, expectedMajorVersion: number): ParsedTag {
     const remoteTagMatch = line.match(REMOTE_TAG_PATTERN)
     const tag = remoteTagMatch?.[1]
 
@@ -65,23 +66,24 @@ function parseRemoteTag(line: string): ParsedTag {
     }
 
     const rawVersion = tag.slice(TAG_PREFIX.length)
-    const semverMatch = rawVersion.match(SEMVER_PATTERN)
+    const semver = parse(rawVersion)
 
-    if (!semverMatch) {
+    if (!semver) {
         throw new Error(`Invalid semantic version tag: ${tag}`)
     }
 
-    const major = Number(semverMatch[1])
-    const minor = Number(semverMatch[2])
-    const patch = Number(semverMatch[3])
+    const { build, major, minor, patch, version } = semver
+    const normalizedVersion = build.length > 0
+        ? `${version}+${build.join('.')}`
+        : version
 
-    if (major !== TARGET_MAJOR) {
+    if (major !== expectedMajorVersion) {
         throw new Error(`Unexpected major version tag: ${tag}`)
     }
 
     return {
         record: {
-            version: `v${rawVersion}`,
+            version: normalizedVersion,
             majorVersion: `v${major}`,
         },
         major,
@@ -98,16 +100,14 @@ function groupTagsByMinor(tags: ParsedTag[]): MinorGroup[] {
         const group = groups.get(key)
 
         if (group) {
-            group.highestPatch = Math.max(group.highestPatch, tag.patch)
-            group.changelog.push(tag.record)
+            group.tags.push(tag)
             continue
         }
 
         groups.set(key, {
             major: tag.major,
             minor: tag.minor,
-            highestPatch: tag.patch,
-            changelog: [tag.record],
+            tags: [tag],
         })
     }
 
@@ -116,32 +116,91 @@ function groupTagsByMinor(tags: ParsedTag[]): MinorGroup[] {
     )
 }
 
-function buildOutputFiles(tags: ParsedTag[]): Map<string, ChangelogRecord[]> {
-    const outputFiles = new Map<string, ChangelogRecord[]>()
+function compareBaseVersions(left: ParsedTag, right: ParsedTag): number {
+    return left.major - right.major
+        || left.minor - right.minor
+        || left.patch - right.patch
+}
 
-    outputFiles.set(
-        `v${TARGET_MAJOR}.json`,
-        tags.map(tag => tag.record),
-    )
+function getHighestBaseVersion(tags: ParsedTag[]): ParsedTag {
+    const [firstTag, ...remainingTags] = tags
+
+    if (!firstTag) {
+        throw new Error('Cannot resolve a version from an empty tag collection')
+    }
+
+    return remainingTags.reduce((highestTag, tag) =>
+        compareBaseVersions(tag, highestTag) > 0 ? tag : highestTag, firstTag)
+}
+
+function getBaseVersion(tag: ParsedTag): string {
+    return `${tag.major}.${tag.minor}.${tag.patch}`
+}
+
+function createMinorChangelogFile(tags: ParsedTag[]): MinorChangelogFile {
+    const highestTag = getHighestBaseVersion(tags)
+    const version = getBaseVersion(highestTag)
+
+    return {
+        version,
+        majorVersion: `v${highestTag.major}`,
+        changelog: tags
+            .map(tag => tag.record)
+            .filter(record => record.version !== version),
+    }
+}
+
+function groupTagsByMajor(tags: ParsedTag[]): Map<number, ChangelogRecord[]> {
+    const groups = new Map<number, ChangelogRecord[]>()
+
+    for (const tag of tags) {
+        const group = groups.get(tag.major)
+
+        if (group) {
+            group.push(tag.record)
+        }
+        else {
+            groups.set(tag.major, [tag.record])
+        }
+    }
+
+    return groups
+}
+
+function buildOutputFiles(tags: ParsedTag[]): Map<string, ChangelogFile> {
+    const outputFiles = new Map<string, ChangelogFile>()
+
+    for (const [major, changelog] of groupTagsByMajor(tags)) {
+        outputFiles.set(`v${major}.json`, changelog)
+    }
 
     for (const group of groupTagsByMinor(tags)) {
-        const filename = `v${group.major}.${group.minor}.${group.highestPatch}.json`
-        outputFiles.set(filename, group.changelog)
+        const changelogFile = createMinorChangelogFile(group.tags)
+        const filename = `v${changelogFile.version}.json`
+        outputFiles.set(filename, changelogFile)
     }
 
     return outputFiles
 }
 
-async function writeJsonFile(filename: string, changelog: ChangelogRecord[]): Promise<void> {
+async function writeJsonFile(filename: string, changelog: ChangelogFile): Promise<void> {
     const file = path.join(OUTPUT_DIRECTORY, filename)
     await fs.writeFile(file, `${JSON.stringify(changelog, null, 2)}\n`, 'utf8')
 }
 
-async function removeStaleMinorFiles(expectedFiles: Set<string>): Promise<void> {
+async function removeStaleMinorFiles(
+    expectedFiles: Set<string>,
+    syncedMajorVersions: Set<number>,
+): Promise<void> {
     const filenames = await fs.readdir(OUTPUT_DIRECTORY)
-    const staleFiles = filenames.filter(filename =>
-        MINOR_FILE_PATTERN.test(filename) && !expectedFiles.has(filename),
-    )
+    const staleFiles = filenames.filter((filename) => {
+        const match = filename.match(MINOR_FILE_PATTERN)
+        const majorVersion = Number(match?.[1])
+
+        return match
+            && syncedMajorVersions.has(majorVersion)
+            && !expectedFiles.has(filename)
+    })
 
     await Promise.all(staleFiles.map(filename =>
         fs.unlink(path.join(OUTPUT_DIRECTORY, filename)),
@@ -149,16 +208,24 @@ async function removeStaleMinorFiles(expectedFiles: Set<string>): Promise<void> 
 }
 
 async function main(): Promise<void> {
-    const tags = await fetchTags()
+    const tags = (await Promise.all(MAJOR_VERSIONS.map(fetchTags))).flat()
+
+    if (tags.length === 0) {
+        throw new Error(`No tags matched the configured major versions: ${MAJOR_VERSIONS.join(', ')}`)
+    }
+
     const outputFiles = buildOutputFiles(tags)
+    const syncedMajorVersions = new Set(tags.map(tag => tag.major))
 
     await fs.mkdir(OUTPUT_DIRECTORY, { recursive: true })
     await Promise.all([...outputFiles].map(([filename, changelog]) =>
         writeJsonFile(filename, changelog),
     ))
-    await removeStaleMinorFiles(new Set(outputFiles.keys()))
+    await removeStaleMinorFiles(new Set(outputFiles.keys()), syncedMajorVersions)
 
-    console.log(`Synced ${tags.length} tags to ${outputFiles.size} changelog files`)
+    console.log(
+        `Synced ${tags.length} tags across ${syncedMajorVersions.size} major versions to ${outputFiles.size} changelog files`,
+    )
 }
 
 await main()
