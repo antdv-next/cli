@@ -6,19 +6,21 @@ import { fileURLToPath } from 'node:url'
 import { parse } from 'semver'
 import { x } from 'tinyexec'
 
-interface ChangelogRecord {
+interface VersionRecord {
     version: string
     majorVersion: string
 }
 
-interface MinorChangelogFile extends ChangelogRecord {
+interface ChangelogRecord extends VersionRecord {
+    publishedAt: string
+}
+
+interface ChangelogFile extends VersionRecord {
     changelog: ChangelogRecord[]
 }
 
-type ChangelogFile = ChangelogRecord[] | MinorChangelogFile
-
 interface ParsedTag {
-    record: ChangelogRecord
+    record: VersionRecord
     major: number
     minor: number
     patch: number
@@ -31,8 +33,9 @@ interface MinorGroup {
 }
 
 const MAJOR_VERSIONS = [1, 2, 3, 4] as const
+const PACKAGE_NAME = 'antdv-next'
 const REMOTE_URL = 'https://github.com/antdv-next/antdv-next.git'
-const TAG_PREFIX = 'antdv-next@'
+const TAG_PREFIX = `${PACKAGE_NAME}@`
 const OUTPUT_DIRECTORY = fileURLToPath(new URL('../data', import.meta.url))
 const REMOTE_TAG_PATTERN = /^[0-9a-f]+\s+refs\/tags\/(.+)$/i
 const MINOR_FILE_PATTERN = /^v(\d+)\.(\d+)\.(\d+)\.json$/
@@ -57,6 +60,56 @@ async function fetchTags(majorVersion: number): Promise<ParsedTag[]> {
     return lines.map(line => parseRemoteTag(line, majorVersion))
 }
 
+async function fetchPublishTimes(): Promise<Map<string, string>> {
+    const { stdout } = await x('npm', [
+        'view',
+        PACKAGE_NAME,
+        'time',
+        '--json',
+    ], {
+        throwOnError: true,
+        nodeOptions: {
+            stdio: 'pipe',
+        },
+    })
+
+    let data: unknown
+
+    try {
+        data = JSON.parse(stdout)
+    }
+    catch {
+        throw new Error(`Invalid npm publish time response for ${PACKAGE_NAME}`)
+    }
+
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        throw new Error(`Unexpected npm publish time response for ${PACKAGE_NAME}`)
+    }
+
+    const publishTimes = new Map<string, string>()
+
+    for (const [rawVersion, rawPublishedAt] of Object.entries(data)) {
+        const semver = parse(rawVersion)
+
+        if (!semver || typeof rawPublishedAt !== 'string') {
+            continue
+        }
+
+        const publishedAt = new Date(rawPublishedAt)
+        if (Number.isNaN(publishedAt.getTime())) {
+            throw new TypeError(`Invalid npm publish time for ${PACKAGE_NAME}@${rawVersion}`)
+        }
+
+        publishTimes.set(formatSemver(semver), publishedAt.toISOString())
+    }
+
+    if (publishTimes.size === 0) {
+        throw new Error(`No npm publish times found for ${PACKAGE_NAME}`)
+    }
+
+    return publishTimes
+}
+
 function parseRemoteTag(line: string, expectedMajorVersion: number): ParsedTag {
     const remoteTagMatch = line.match(REMOTE_TAG_PATTERN)
     const tag = remoteTagMatch?.[1]
@@ -72,10 +125,7 @@ function parseRemoteTag(line: string, expectedMajorVersion: number): ParsedTag {
         throw new Error(`Invalid semantic version tag: ${tag}`)
     }
 
-    const { build, major, minor, patch, version } = semver
-    const normalizedVersion = build.length > 0
-        ? `${version}+${build.join('.')}`
-        : version
+    const { major, minor, patch } = semver
 
     if (major !== expectedMajorVersion) {
         throw new Error(`Unexpected major version tag: ${tag}`)
@@ -83,13 +133,19 @@ function parseRemoteTag(line: string, expectedMajorVersion: number): ParsedTag {
 
     return {
         record: {
-            version: normalizedVersion,
+            version: formatSemver(semver),
             majorVersion: `v${major}`,
         },
         major,
         minor,
         patch,
     }
+}
+
+function formatSemver(semver: NonNullable<ReturnType<typeof parse>>): string {
+    return semver.build.length > 0
+        ? `${semver.version}+${semver.build.join('.')}`
+        : semver.version
 }
 
 function groupTagsByMinor(tags: ParsedTag[]): MinorGroup[] {
@@ -129,15 +185,47 @@ function getHighestBaseVersion(tags: ParsedTag[]): ParsedTag {
         throw new Error('Cannot resolve a version from an empty tag collection')
     }
 
-    return remainingTags.reduce((highestTag, tag) =>
-        compareBaseVersions(tag, highestTag) > 0 ? tag : highestTag, firstTag)
+    return remainingTags.reduce(
+        (highestTag, tag) => compareBaseVersions(tag, highestTag) > 0 ? tag : highestTag,
+        firstTag,
+    )
 }
 
 function getBaseVersion(tag: ParsedTag): string {
     return `${tag.major}.${tag.minor}.${tag.patch}`
 }
 
-function createMinorChangelogFile(tags: ParsedTag[]): MinorChangelogFile {
+function createChangelogRecord(
+    tag: ParsedTag,
+    publishTimes: Map<string, string>,
+): ChangelogRecord {
+    const publishedAt = publishTimes.get(tag.record.version)
+
+    if (!publishedAt) {
+        throw new Error(`Missing npm publish time for ${PACKAGE_NAME}@${tag.record.version}`)
+    }
+
+    return {
+        ...tag.record,
+        publishedAt,
+    }
+}
+
+function assertPublishTimes(
+    tags: ParsedTag[],
+    publishTimes: Map<string, string>,
+): void {
+    for (const tag of tags) {
+        if (!publishTimes.has(tag.record.version)) {
+            throw new Error(`Missing npm publish time for ${PACKAGE_NAME}@${tag.record.version}`)
+        }
+    }
+}
+
+function createChangelogFile(
+    tags: ParsedTag[],
+    publishTimes: Map<string, string>,
+): ChangelogFile {
     const highestTag = getHighestBaseVersion(tags)
     const version = getBaseVersion(highestTag)
 
@@ -145,37 +233,40 @@ function createMinorChangelogFile(tags: ParsedTag[]): MinorChangelogFile {
         version,
         majorVersion: `v${highestTag.major}`,
         changelog: tags
-            .map(tag => tag.record)
-            .filter(record => record.version !== version),
+            .filter(tag => tag.record.version !== version)
+            .map(tag => createChangelogRecord(tag, publishTimes)),
     }
 }
 
-function groupTagsByMajor(tags: ParsedTag[]): Map<number, ChangelogRecord[]> {
-    const groups = new Map<number, ChangelogRecord[]>()
+function groupTagsByMajor(tags: ParsedTag[]): Map<number, ParsedTag[]> {
+    const groups = new Map<number, ParsedTag[]>()
 
     for (const tag of tags) {
         const group = groups.get(tag.major)
 
         if (group) {
-            group.push(tag.record)
+            group.push(tag)
         }
         else {
-            groups.set(tag.major, [tag.record])
+            groups.set(tag.major, [tag])
         }
     }
 
     return groups
 }
 
-function buildOutputFiles(tags: ParsedTag[]): Map<string, ChangelogFile> {
+function buildOutputFiles(
+    tags: ParsedTag[],
+    publishTimes: Map<string, string>,
+): Map<string, ChangelogFile> {
     const outputFiles = new Map<string, ChangelogFile>()
 
-    for (const [major, changelog] of groupTagsByMajor(tags)) {
-        outputFiles.set(`v${major}.json`, changelog)
+    for (const [major, majorTags] of groupTagsByMajor(tags)) {
+        outputFiles.set(`v${major}.json`, createChangelogFile(majorTags, publishTimes))
     }
 
     for (const group of groupTagsByMinor(tags)) {
-        const changelogFile = createMinorChangelogFile(group.tags)
+        const changelogFile = createChangelogFile(group.tags, publishTimes)
         const filename = `v${changelogFile.version}.json`
         outputFiles.set(filename, changelogFile)
     }
@@ -208,13 +299,18 @@ async function removeStaleMinorFiles(
 }
 
 async function main(): Promise<void> {
-    const tags = (await Promise.all(MAJOR_VERSIONS.map(fetchTags))).flat()
+    const [tagGroups, publishTimes] = await Promise.all([
+        Promise.all(MAJOR_VERSIONS.map(fetchTags)),
+        fetchPublishTimes(),
+    ])
+    const tags = tagGroups.flat()
 
     if (tags.length === 0) {
         throw new Error(`No tags matched the configured major versions: ${MAJOR_VERSIONS.join(', ')}`)
     }
 
-    const outputFiles = buildOutputFiles(tags)
+    assertPublishTimes(tags, publishTimes)
+    const outputFiles = buildOutputFiles(tags, publishTimes)
     const syncedMajorVersions = new Set(tags.map(tag => tag.major))
 
     await fs.mkdir(OUTPUT_DIRECTORY, { recursive: true })
