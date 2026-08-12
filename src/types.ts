@@ -1,6 +1,8 @@
+import type { OutputFormat } from '@/args.ts'
+
 export interface ResolvedConfig {
     cwd: string
-    format: string
+    format: OutputFormat
 }
 
 export interface PackageInfo {

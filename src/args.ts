@@ -1,4 +1,7 @@
-import type { ParsedArgs } from 'citty'
+import type { ArgsDef, ParsedArgs } from 'citty'
+
+export const OUTPUT_FORMATS = ['text', 'markdown', 'json'] as const
+export type OutputFormat = typeof OUTPUT_FORMATS[number]
 
 export const defaultArgs = {
     cwd: {
@@ -8,15 +11,12 @@ export const defaultArgs = {
         default: process.cwd(),
     },
     format: {
-        type: 'string',
-        description: 'Output format: json, text, or markdown',
+        type: 'enum',
+        description: 'Output format',
         alias: 'f',
         default: 'text',
+        options: [...OUTPUT_FORMATS],
     },
-} as const
+} satisfies ArgsDef
 
-type DeepWriteable<T> = {
-    -readonly [P in keyof T]: T[P] extends object ? DeepWriteable<T[P]> : T[P];
-}
-
-export type CommandArgs = ParsedArgs<DeepWriteable<typeof defaultArgs>>
+export type CommandArgs = ParsedArgs<typeof defaultArgs>
