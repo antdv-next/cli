@@ -3,8 +3,12 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc.js'
 import { parse } from 'semver'
 import { x } from 'tinyexec'
+
+dayjs.extend(utc)
 
 interface VersionRecord {
     version: string
@@ -95,12 +99,12 @@ async function fetchPublishTimes(): Promise<Map<string, string>> {
             continue
         }
 
-        const publishedAt = new Date(rawPublishedAt)
-        if (Number.isNaN(publishedAt.getTime())) {
+        const publishedAt = dayjs.utc(rawPublishedAt)
+        if (!publishedAt.isValid()) {
             throw new TypeError(`Invalid npm publish time for ${PACKAGE_NAME}@${rawVersion}`)
         }
 
-        publishTimes.set(formatSemver(semver), publishedAt.toISOString())
+        publishTimes.set(formatSemver(semver), publishedAt.format('YYYY-MM-DD'))
     }
 
     if (publishTimes.size === 0) {

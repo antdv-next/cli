@@ -57,6 +57,7 @@
         "@lonewolfyx/tsconfig": "^0.0.6",
         "@types/node": "^26.2.0",
         "@types/semver": "^7.8.0",
+        "dayjs": "^1.11.21",
         "eslint": "^10.8.1",
         "jiti": "^2.7.0",
         "lint-staged": "^17.3.0",
