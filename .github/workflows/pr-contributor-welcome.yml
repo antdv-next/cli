@@ -1,4 +1,4 @@
-name: PullRequest Contributor Welcome
+name: Pull Request Contributor Welcome
 
 on:
   pull_request_target:
