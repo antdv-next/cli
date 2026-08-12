@@ -5,7 +5,7 @@ const { version } = JSON.parse(readFileSync('package.json', 'utf-8'))
 
 export default defineConfig({
     define: {
-        __CLI_VERSION__: JSON.parse(JSON.stringify(version)),
+        __CLI_VERSION__: JSON.stringify(version),
     },
     resolve: {
         alias: {
