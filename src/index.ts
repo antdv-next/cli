@@ -1,4 +1,5 @@
 import { createMain, defineCommand, renderUsage, showUsage } from 'citty'
+import { defaultArgs } from '@/args.ts'
 import { createHelpBanner } from '@/utils/banner.ts'
 import { description, name, version } from '../package.json' with { type: 'json' }
 
@@ -35,14 +36,7 @@ const main = defineCommand({
     },
     setup() {
     },
-    args: {
-        cwd: {
-            type: 'string',
-            description: 'Current working directory',
-            alias: 'c',
-            default: process.cwd(),
-        },
-    },
+    args: defaultArgs,
     subCommands,
     async run(ctx) {
         if (ctx.rawArgs.length >= 1 && Object.keys(subCommands).includes(ctx.rawArgs[0]!)) {
