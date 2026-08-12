@@ -4,6 +4,7 @@ import { getPackageInfo, loadPackageJSON } from 'local-pkg'
 import { x } from 'tinyexec'
 import { defaultArgs } from '@/args.ts'
 import { resolveConfig } from '@/config.ts'
+import { output } from '@/utils/output.ts'
 
 export type EnvinfoValue = PackageInfo | string | null
 export type EnvinfoData = Record<string, Record<string, EnvinfoValue>>
@@ -291,14 +292,13 @@ export default defineCommand({
             buildTools,
         }
 
-        if (config.format === 'json') {
-            console.log(JSON.stringify(data, null, 2))
-        }
-        else if (config.format === 'markdown') {
-            console.log(formatMarkdown(data))
-        }
-        else {
-            console.log(formatText(data))
-        }
+        output(
+            {
+                json: data,
+                markdown: formatMarkdown(data),
+                text: formatText(data),
+            },
+            config.format,
+        )
     },
 })
