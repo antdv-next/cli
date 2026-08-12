@@ -58,7 +58,8 @@
         "tsdown": "^0.22.14",
         "tsx": "^4.23.12",
         "typescript": "^6.0.3",
-        "verify-git-commit": "^0.0.1"
+        "verify-git-commit": "^0.0.1",
+        "vitest": "^4.1.10"
     },
     "simple-git-hooks": {
         "pre-commit": "npx lint-staged",
