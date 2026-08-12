@@ -34,7 +34,6 @@ const main = defineCommand({
         description,
     },
     setup() {
-        console.log(createHelpBanner(CLI_VERSION))
     },
     args: {
         cwd: {
@@ -49,6 +48,8 @@ const main = defineCommand({
         if (ctx.rawArgs.length >= 1 && Object.keys(subCommands).includes(ctx.rawArgs[0]!)) {
             return ''
         }
+
+        console.log(createHelpBanner(CLI_VERSION))
 
         await showUsage(ctx.cmd)
     },
