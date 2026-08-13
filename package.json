@@ -56,7 +56,6 @@
     "devDependencies": {
         "@antfu/eslint-config": "^9.3.0",
         "@lonewolfyx/tsconfig": "^0.0.6",
-        "@lonewolfyx/utils": "^0.0.5",
         "@types/node": "^26.2.0",
         "@types/semver": "^7.8.0",
         "dayjs": "^1.11.21",
