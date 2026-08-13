@@ -16,7 +16,7 @@ interface VersionRecord {
 }
 
 interface ChangelogRecord extends VersionRecord {
-    publishedAt: string
+    date: string
 }
 
 interface ChangelogFile extends VersionRecord {
@@ -211,7 +211,7 @@ function createChangelogRecord(
 
     return {
         ...tag.record,
-        publishedAt,
+        date: publishedAt,
     }
 }
 
