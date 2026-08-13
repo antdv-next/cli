@@ -1,5 +1,7 @@
 import type { OutputFormat } from '@/args.ts'
 
+export declare const __CLI_VERSION__: string
+
 export interface ResolvedConfig {
     cwd: string
     format: OutputFormat
