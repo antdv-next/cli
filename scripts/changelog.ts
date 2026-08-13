@@ -1,8 +1,8 @@
 // @env node
 
 import fs from 'node:fs/promises'
-import os from 'node:os'
 import path from 'node:path'
+import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { downloadTemplate } from 'giget'
 
@@ -214,12 +214,9 @@ function parseChangelog(markdown: string): ParsedChangelog {
 }
 
 async function main(): Promise<void> {
-    const temporaryDirectory = await fs.mkdtemp(
-        path.join(os.tmpdir(), 'antdv-next-changelog-'),
-    )
+    const repositoryDirectory = path.join(process.cwd(), 'repository')
 
     try {
-        const repositoryDirectory = path.join(temporaryDirectory, 'repository')
         const downloadedRepository = await downloadTemplate(REPOSITORY_SOURCE, {
             dir: repositoryDirectory,
             silent: true,
@@ -257,7 +254,7 @@ async function main(): Promise<void> {
         )
     }
     finally {
-        await fs.rm(temporaryDirectory, { recursive: true, force: true })
+        await fs.rm(repositoryDirectory, { recursive: true, force: true })
     }
 }
 
