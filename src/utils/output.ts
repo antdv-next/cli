@@ -4,10 +4,14 @@ import type { ResolvedContent } from '@/types.ts'
 export const output = (content: ResolvedContent, type: OutputFormat): string => {
     switch (type) {
         case 'json':
-            return JSON.stringify(content.json, null, 2)
+            console.log(JSON.stringify(content.json, null, 2))
+            return ''
         case 'markdown':
+            console.log(content.markdown)
+            return ''
         case 'text':
         default:
-            return content.text
+            console.log(content.text)
+            return ''
     }
 }
