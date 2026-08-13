@@ -1,4 +1,4 @@
-import type { OutputFormat } from '@/args.ts'
+import type { OutputFormat } from '@/args/default.ts'
 
 export interface ResolvedConfig {
     cwd: string

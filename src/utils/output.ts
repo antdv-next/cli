@@ -1,4 +1,4 @@
-import type { OutputFormat } from '@/args.ts'
+import type { OutputFormat } from '@/args/default.ts'
 import type { ResolvedContent } from '@/types.ts'
 
 export const output = (content: ResolvedContent, type: OutputFormat): string => {

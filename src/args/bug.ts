@@ -1,5 +1,5 @@
 import type { ArgsDef } from 'citty'
-import { defaultArgs } from '@/args.ts'
+import { defaultArgs } from '@/args/default.ts'
 
 export const bugArgs = {
     ...defaultArgs,

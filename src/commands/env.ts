@@ -2,7 +2,7 @@ import type { PackageInfo, ResolvedConfig } from '@/types.ts'
 import { defineCommand } from 'citty'
 import { getPackageInfo, loadPackageJSON } from 'local-pkg'
 import { x } from 'tinyexec'
-import { defaultArgs } from '@/args.ts'
+import { defaultArgs } from '@/args/default.ts'
 import { resolveConfig } from '@/config.ts'
 import { output } from '@/utils/output.ts'
 
