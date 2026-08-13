@@ -10,6 +10,10 @@ export const defaultArgs = {
         alias: 'c',
         default: process.cwd(),
     },
+    ver: {
+        type: 'string',
+        description: 'Target antdv-next version (e.g. 1.0.0)',
+    },
     format: {
         type: 'enum',
         description: 'Output format',
