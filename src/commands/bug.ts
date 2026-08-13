@@ -1,11 +1,12 @@
+import type { ParsedArgs } from 'citty'
 import { defineCommand } from 'citty'
-import { defaultArgs } from '@/args.ts'
+import { bugArgs } from '@/args/bug.ts'
 import { ANTDV_REPO } from '@/constants/repo.ts'
 import { isUrl } from '@/utils/is.ts'
 import { buildIssueUrl, collectAntdvEnv, createIssueBody } from '@/utils/issue.ts'
 import { output } from '@/utils/output.ts'
 
-export async function createBug(repo: string, args: any): Promise<void> {
+export async function createBug(repo: string, args: ParsedArgs<typeof bugArgs>): Promise<void> {
     const env = await collectAntdvEnv(args.cwd)
 
     if (args.reproduction.length > 1 && !isUrl(args.reproduction)) {
@@ -48,52 +49,7 @@ export default defineCommand({
         name: 'bug',
         description: 'Report a bug to the antdv-next repository',
     },
-    args: {
-        ...defaultArgs,
-        // 问题标题
-        title: {
-            type: 'string',
-            description: 'Issue title',
-            required: true,
-            alias: 't',
-        },
-        // 重现链接
-        reproduction: {
-            type: 'string',
-            description: 'Reproduction link',
-            default: '',
-        },
-        // 重现步骤
-        steps: {
-            type: 'string',
-            description: 'Steps to reproduce',
-            default: '',
-        },
-        // 期望的结果是什么？
-        expected: {
-            type: 'string',
-            description: 'Expected behavior',
-            default: '',
-        },
-        // 实际的结果是什么?
-        actual: {
-            type: 'string',
-            description: 'Actual behavior',
-            default: '',
-        },
-        // 补充说明
-        extra: {
-            type: 'string',
-            description: 'Additional comments',
-            default: '',
-        },
-        // 是否 cli 创建 issues
-        submit: {
-            type: 'boolean',
-            description: 'Submit via gh CLI instead of previewing',
-            default: false,
-        },
-    },
+    args: bugArgs,
     async run({ args }) {
         await createBug(ANTDV_REPO, args)
     },
