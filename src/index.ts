@@ -1,6 +1,5 @@
 import { createMain, defineCommand, renderUsage, showUsage } from 'citty'
 import { defaultArgs } from '@/args.ts'
-import { __CLI_VERSION__ } from '@/types.ts'
 import { createHelpBanner } from '@/utils/banner.ts'
 import { description, name, version } from '../package.json' with { type: 'json' }
 
