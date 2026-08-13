@@ -14,7 +14,7 @@ export const defaultArgs = {
         type: 'enum',
         description: 'Output format',
         alias: 'f',
-        default: 'text',
+        default: 'text' as const,
         options: [...OUTPUT_FORMATS],
     },
 } satisfies ArgsDef
