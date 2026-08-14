@@ -15,8 +15,15 @@ interface VersionRecord {
     majorVersion: string
 }
 
+interface ChangelogChange {
+    component: string | null
+    type: string
+    description: string
+}
+
 interface ChangelogRecord extends VersionRecord {
     date: string
+    changes: ChangelogChange[]
 }
 
 interface ChangelogFile extends VersionRecord {
@@ -43,6 +50,7 @@ const PACKAGE_NAME = 'antdv-next'
 const REMOTE_URL = 'https://github.com/antdv-next/antdv-next.git'
 const TAG_PREFIX = `${PACKAGE_NAME}@`
 const OUTPUT_DIRECTORY = fileURLToPath(new URL('../data', import.meta.url))
+const CHANGELOG_FILE = path.join(OUTPUT_DIRECTORY, 'changelog.json')
 const REMOTE_TAG_PATTERN = /^[0-9a-f]+\s+refs\/tags\/(.+)$/i
 const MINOR_FILE_PATTERN = /^v(\d+)\.(\d+)\.(\d+)\.json$/
 
@@ -114,6 +122,61 @@ async function fetchPublishTimes(): Promise<Map<string, string>> {
     }
 
     return publishTimes
+}
+
+function isChangelogChange(value: unknown): value is ChangelogChange {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return false
+    }
+
+    const change = value as Record<string, unknown>
+
+    return (typeof change.component === 'string' || change.component === null)
+        && typeof change.type === 'string'
+        && typeof change.description === 'string'
+}
+
+async function readChangesByVersion(): Promise<Map<string, ChangelogChange[]>> {
+    const source = await fs.readFile(CHANGELOG_FILE, 'utf8')
+    let data: unknown
+
+    try {
+        data = JSON.parse(source)
+    }
+    catch {
+        throw new Error(`Invalid JSON in ${CHANGELOG_FILE}`)
+    }
+
+    if (!Array.isArray(data)) {
+        throw new TypeError(`Expected an array in ${CHANGELOG_FILE}`)
+    }
+
+    const changesByVersion = new Map<string, ChangelogChange[]>()
+
+    for (const [index, value] of data.entries()) {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) {
+            throw new TypeError(`Invalid changelog record at index ${index} in ${CHANGELOG_FILE}`)
+        }
+
+        const record = value as Record<string, unknown>
+        const { version, changelog } = record
+
+        if (typeof version !== 'string' || !Array.isArray(changelog)) {
+            throw new TypeError(`Invalid changelog record at index ${index} in ${CHANGELOG_FILE}`)
+        }
+
+        if (!changelog.every(isChangelogChange)) {
+            throw new TypeError(`Invalid changes for version ${version} in ${CHANGELOG_FILE}`)
+        }
+
+        if (changesByVersion.has(version)) {
+            throw new Error(`Duplicate version ${version} in ${CHANGELOG_FILE}`)
+        }
+
+        changesByVersion.set(version, changelog)
+    }
+
+    return changesByVersion
 }
 
 function parseRemoteTag(line: string, expectedMajorVersion: number): ParsedTag {
@@ -204,6 +267,7 @@ function getBaseVersion(tag: ParsedTag): string {
 function createChangelogRecord(
     tag: ParsedTag,
     publishTimes: Map<string, string>,
+    changesByVersion: Map<string, ChangelogChange[]>,
 ): ChangelogRecord {
     const publishedAt = publishTimes.get(tag.record.version)
 
@@ -214,6 +278,7 @@ function createChangelogRecord(
     return {
         ...tag.record,
         date: publishedAt,
+        changes: changesByVersion.get(tag.record.version) ?? [],
     }
 }
 
@@ -231,6 +296,7 @@ function assertPublishTimes(
 function createChangelogFile(
     tags: ParsedTag[],
     publishTimes: Map<string, string>,
+    changesByVersion: Map<string, ChangelogChange[]>,
 ): ChangelogFile {
     const highestTag = getHighestBaseVersion(tags)
     const version = getBaseVersion(highestTag)
@@ -240,7 +306,7 @@ function createChangelogFile(
         majorVersion: `v${highestTag.major}`,
         changelog: tags
             .filter(tag => tag.record.version !== version)
-            .map(tag => createChangelogRecord(tag, publishTimes)),
+            .map(tag => createChangelogRecord(tag, publishTimes, changesByVersion)),
     }
 }
 
@@ -264,15 +330,23 @@ function groupTagsByMajor(tags: ParsedTag[]): Map<number, ParsedTag[]> {
 function buildOutputFiles(
     tags: ParsedTag[],
     publishTimes: Map<string, string>,
+    changesByVersion: Map<string, ChangelogChange[]>,
 ): Map<string, ChangelogFile> {
     const outputFiles = new Map<string, ChangelogFile>()
 
     for (const [major, majorTags] of groupTagsByMajor(tags)) {
-        outputFiles.set(`v${major}.json`, createChangelogFile(majorTags, publishTimes))
+        outputFiles.set(
+            `v${major}.json`,
+            createChangelogFile(majorTags, publishTimes, changesByVersion),
+        )
     }
 
     for (const group of groupTagsByMinor(tags)) {
-        const changelogFile = createChangelogFile(group.tags, publishTimes)
+        const changelogFile = createChangelogFile(
+            group.tags,
+            publishTimes,
+            changesByVersion,
+        )
         const filename = `v${changelogFile.version}.json`
         outputFiles.set(filename, changelogFile)
     }
@@ -323,9 +397,10 @@ async function removeStaleMinorFiles(
 }
 
 async function main(): Promise<void> {
-    const [tagGroups, publishTimes] = await Promise.all([
+    const [tagGroups, publishTimes, changesByVersion] = await Promise.all([
         Promise.all(MAJOR_VERSIONS.map(fetchTags)),
         fetchPublishTimes(),
+        readChangesByVersion(),
     ])
     const tags = tagGroups.flat()
 
@@ -334,7 +409,7 @@ async function main(): Promise<void> {
     }
 
     assertPublishTimes(tags, publishTimes)
-    const outputFiles = buildOutputFiles(tags, publishTimes)
+    const outputFiles = buildOutputFiles(tags, publishTimes, changesByVersion)
     const versionFile = createVersionFile(tags)
     const syncedMajorVersions = new Set(tags.map(tag => tag.major))
 

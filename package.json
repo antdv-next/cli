@@ -42,7 +42,8 @@
         "prepare": "simple-git-hooks",
         "test": "vitest run",
         "test:watch": "vitest",
-        "generate-changelog": "tsx ./scripts/changelog.ts"
+        "generate-changelog": "tsx ./scripts/changelog.ts",
+        "extract": "tsx ./scripts/sync.ts"
     },
     "dependencies": {
         "@clack/prompts": "^1.7.0",
