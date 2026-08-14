@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 import { downloadTemplate } from 'giget'
 
 interface ChangelogItem {
-    component: string | null
+    component: string
     type: string
     description: string
 }
@@ -156,7 +156,7 @@ function parseSection(
         }
 
         return [{
-            component: component?.trim() || null,
+            component: component?.trim() || '',
             type,
             description: description.trim(),
         }]

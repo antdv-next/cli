@@ -16,9 +16,13 @@ interface VersionRecord {
 }
 
 interface ChangelogChange {
-    component: string | null
+    component: string
     type: string
     description: string
+}
+
+interface SourceChangelogChange extends Omit<ChangelogChange, 'component'> {
+    component: string | null
 }
 
 interface ChangelogRecord extends VersionRecord {
@@ -124,7 +128,7 @@ async function fetchPublishTimes(): Promise<Map<string, string>> {
     return publishTimes
 }
 
-function isChangelogChange(value: unknown): value is ChangelogChange {
+function isSourceChangelogChange(value: unknown): value is SourceChangelogChange {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
         return false
     }
@@ -165,7 +169,7 @@ async function readChangesByVersion(): Promise<Map<string, ChangelogChange[]>> {
             throw new TypeError(`Invalid changelog record at index ${index} in ${CHANGELOG_FILE}`)
         }
 
-        if (!changelog.every(isChangelogChange)) {
+        if (!changelog.every(isSourceChangelogChange)) {
             throw new TypeError(`Invalid changes for version ${version} in ${CHANGELOG_FILE}`)
         }
 
@@ -173,7 +177,10 @@ async function readChangesByVersion(): Promise<Map<string, ChangelogChange[]>> {
             throw new Error(`Duplicate version ${version} in ${CHANGELOG_FILE}`)
         }
 
-        changesByVersion.set(version, changelog)
+        changesByVersion.set(version, changelog.map(change => ({
+            ...change,
+            component: change.component ?? '',
+        })))
     }
 
     return changesByVersion
