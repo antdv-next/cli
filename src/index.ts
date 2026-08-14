@@ -25,6 +25,7 @@ const subCommands = {
     'token': () => import('./commands/token.ts').then(r => r.default),
     'upgrade': () => import('./commands/upgrade.ts').then(r => r.default),
     'usage': () => import('./commands/usage.ts').then(r => r.default),
+    'check': () => import('./commands/check.ts').then(r => r.default),
 }
 
 const main = defineCommand({
