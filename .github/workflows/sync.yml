@@ -1,6 +1,8 @@
 name: Sync data
 
 on:
+  schedule:
+    - cron: '28 * * * *'
   workflow_dispatch:
 
 permissions:
