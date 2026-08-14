@@ -23,6 +23,8 @@ interface ChangelogFile extends VersionRecord {
     changelog: ChangelogRecord[]
 }
 
+type VersionFile = [Record<string, Record<string, string>>]
+
 interface ParsedTag {
     record: VersionRecord
     major: number
@@ -278,9 +280,27 @@ function buildOutputFiles(
     return outputFiles
 }
 
-async function writeJsonFile(filename: string, changelog: ChangelogFile): Promise<void> {
+function createVersionFile(tags: ParsedTag[]): VersionFile {
+    const versions: Record<string, Record<string, string>> = {}
+
+    for (const group of groupTagsByMinor(tags)) {
+        const majorVersion = `v${group.major}`
+        const minorVersions = versions[majorVersion] ?? {}
+        const highestTag = getHighestBaseVersion(group.tags)
+
+        minorVersions[`${group.major}.${group.minor}`] = getBaseVersion(highestTag)
+        versions[majorVersion] = minorVersions
+    }
+
+    return [versions]
+}
+
+async function writeJsonFile(
+    filename: string,
+    data: ChangelogFile | VersionFile,
+): Promise<void> {
     const file = path.join(OUTPUT_DIRECTORY, filename)
-    await fs.writeFile(file, `${JSON.stringify(changelog, null, 2)}\n`, 'utf8')
+    await fs.writeFile(file, `${JSON.stringify(data, null, 2)}\n`, 'utf8')
 }
 
 async function removeStaleMinorFiles(
@@ -315,16 +335,20 @@ async function main(): Promise<void> {
 
     assertPublishTimes(tags, publishTimes)
     const outputFiles = buildOutputFiles(tags, publishTimes)
+    const versionFile = createVersionFile(tags)
     const syncedMajorVersions = new Set(tags.map(tag => tag.major))
 
     await fs.mkdir(OUTPUT_DIRECTORY, { recursive: true })
-    await Promise.all([...outputFiles].map(([filename, changelog]) =>
-        writeJsonFile(filename, changelog),
-    ))
+    await Promise.all([
+        ...[...outputFiles].map(([filename, changelog]) =>
+            writeJsonFile(filename, changelog),
+        ),
+        writeJsonFile('version.json', versionFile),
+    ])
     await removeStaleMinorFiles(new Set(outputFiles.keys()), syncedMajorVersions)
 
     console.log(
-        `Synced ${tags.length} tags across ${syncedMajorVersions.size} major versions to ${outputFiles.size} changelog files`,
+        `Synced ${tags.length} tags across ${syncedMajorVersions.size} major versions to ${outputFiles.size} changelog files and version.json`,
     )
 }
 
