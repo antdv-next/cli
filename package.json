@@ -47,6 +47,7 @@
     },
     "dependencies": {
         "@clack/prompts": "^1.7.0",
+        "boxen": "^8.0.1",
         "citty": "^0.2.2",
         "envinfo": "^7.21.0",
         "local-pkg": "^1.2.1",
