@@ -11,7 +11,7 @@ const subCommands = {
     'bug-cli': () => import('./commands/bug-cli.ts').then(r => r.default),
     'changelog': () => import('./commands/changelog.ts').then(r => r.default),
     'demo': () => import('./commands/demo.ts').then(r => r.default),
-    'design': () => import('./commands/design.ts').then(r => r.default),
+    'design.md': () => import('./commands/design.ts').then(r => r.default),
     'doc': () => import('./commands/doc.ts').then(r => r.default),
     'doctor': () => import('./commands/doctor.ts').then(r => r.default),
     'env': () => import('./commands/env.ts').then(r => r.default),
