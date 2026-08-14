@@ -1,12 +1,13 @@
 import type { ParsedArgs } from 'citty'
 import { defineCommand } from 'citty'
 import { bugArgs } from '@/args/bug.ts'
+import { defaultArgs } from '@/args/default.ts'
 import { ANTDV_REPO } from '@/constants/repo.ts'
 import { isUrl } from '@/utils/is.ts'
 import { buildIssueUrl, collectAntdvEnv, createIssueBody } from '@/utils/issue.ts'
 import { output } from '@/utils/output.ts'
 
-export async function createBug(repo: string, args: ParsedArgs<typeof bugArgs>): Promise<void> {
+export async function createBug(repo: string, args: ParsedArgs<typeof defaultArgs> & ParsedArgs<typeof bugArgs>): Promise<void> {
     const env = await collectAntdvEnv(args.cwd)
 
     if (args.reproduction.length > 1 && !isUrl(args.reproduction)) {
@@ -49,7 +50,10 @@ export default defineCommand({
         name: 'bug',
         description: 'Report a bug to the antdv-next repository',
     },
-    args: bugArgs,
+    args: {
+        ...defaultArgs,
+        ...bugArgs,
+    },
     async run({ args }) {
         await createBug(ANTDV_REPO, args)
     },

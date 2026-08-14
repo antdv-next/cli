@@ -1,8 +1,6 @@
 import type { ArgsDef } from 'citty'
-import { defaultArgs } from '@/args/default.ts'
 
 export const bugArgs = {
-    ...defaultArgs,
     // 问题标题
     title: {
         type: 'string',
