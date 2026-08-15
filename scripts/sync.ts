@@ -31,6 +31,7 @@ interface ChangelogRecord extends VersionRecord {
 }
 
 interface ChangelogFile extends VersionRecord {
+    globalTokens: unknown[]
     changelog: ChangelogRecord[]
 }
 
@@ -311,6 +312,7 @@ function createChangelogFile(
     return {
         version,
         majorVersion: `v${highestTag.major}`,
+        globalTokens: [],
         changelog: tags
             .filter(tag => tag.record.version !== version)
             .map(tag => createChangelogRecord(tag, publishTimes, changesByVersion)),
