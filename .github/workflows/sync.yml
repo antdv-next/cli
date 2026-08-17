@@ -37,7 +37,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Clone antdv-next source
-        run: npx giget gh:antdv-next/antdv-next antdv-source
+        run: git clone --filter=tree:0 --no-checkout https://github.com/antdv-next/antdv-next.git antdv-source
 
       - name: Generate changelog data
         run: pnpm exec tsx scripts/changelog.ts
