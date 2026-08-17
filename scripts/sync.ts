@@ -34,7 +34,59 @@ interface ChangelogRecord extends VersionRecord {
 
 interface ChangelogFile extends VersionRecord {
     globalTokens: TokenData[] | unknown[]
+    components: ComponentRecord[]
     changelog: ChangelogRecord[]
+}
+
+type ApiSectionName = 'properties' | 'events' | 'methods'
+type MarkdownTableRow = Record<string, string>
+
+interface ComponentPropRecord {
+    name: string
+    type: string
+    default: string
+    description: string
+    descriptionZh: string
+}
+
+interface ComponentRecord {
+    name: string
+    nameZh: string
+    category: string
+    categoryZh: string
+    description: string
+    descriptionZh: string
+    whenToUse: string
+    whenToUseZh: string
+    subComponents: Record<string, ComponentPropRecord[]>
+    props: ComponentPropRecord[]
+}
+
+interface MarkdownHeading {
+    level: number
+    title: string
+    anchor: string
+    start: number
+    contentStart: number
+}
+
+interface ParsedApi {
+    properties: MarkdownTableRow[]
+    events: MarkdownTableRow[]
+    methods: MarkdownTableRow[]
+}
+
+interface ParsedSubComponent {
+    key: string
+    name: string
+    props: ParsedApi
+}
+
+interface ParsedComponentDocument {
+    frontmatter: Record<string, string>
+    whenToUse: string
+    subComponents: ParsedSubComponent[]
+    props: ParsedApi
 }
 
 type VersionFile = [Record<string, Record<string, string>>]
@@ -57,9 +109,663 @@ const PACKAGE_NAME = 'antdv-next'
 const REMOTE_URL = 'https://github.com/antdv-next/antdv-next.git'
 const TAG_PREFIX = `${PACKAGE_NAME}@`
 const OUTPUT_DIRECTORY = fileURLToPath(new URL('../data', import.meta.url))
+const SOURCE_DIRECTORY = fileURLToPath(new URL('../antdv-source', import.meta.url))
+const COMPONENTS_DIRECTORY = path.join(SOURCE_DIRECTORY, 'docs/src/pages/components')
 const CHANGELOG_FILE = path.join(OUTPUT_DIRECTORY, 'changelog.json')
 const REMOTE_TAG_PATTERN = /^[0-9a-f]+\s+refs\/tags\/(.+)$/i
 const MINOR_FILE_PATTERN = /^v(\d+)\.(\d+)\.(\d+)\.json$/
+
+const componentCache = new Map<string, Promise<ComponentRecord[]>>()
+
+function parseFrontmatterValue(rawValue: string): string {
+    const value = rawValue.trim()
+
+    if (value.startsWith('"') && value.endsWith('"')) {
+        try {
+            return JSON.parse(value) as string
+        }
+        catch {
+            return value.slice(1, -1)
+        }
+    }
+
+    if (value.startsWith('\'') && value.endsWith('\'')) {
+        return value.slice(1, -1).replace(/''/g, '\'')
+    }
+
+    return value
+}
+
+function parseFrontmatter(markdown: string): Record<string, string> {
+    const markdownLines = markdown.split(/\r?\n/)
+    const closingDelimiterIndex = markdownLines
+        .slice(1)
+        .findIndex(line => line.trim() === '---') + 1
+
+    if (markdownLines[0]?.trim() !== '---' || closingDelimiterIndex <= 0) {
+        return {}
+    }
+
+    const lines = markdownLines.slice(1, closingDelimiterIndex)
+    const frontmatter: Record<string, string> = {}
+
+    for (let index = 0; index < lines.length; index += 1) {
+        const line = lines[index]!
+        const delimiterIndex = line.indexOf(':')
+        const key = line.slice(0, delimiterIndex)
+
+        if (delimiterIndex <= 0 || !/^[\w-]+$/.test(key)) {
+            continue
+        }
+
+        const rawValue = line.slice(delimiterIndex + 1).trim()
+
+        if (rawValue === '|' || rawValue === '>' || rawValue === '|-' || rawValue === '>-') {
+            const blockLines: string[] = []
+
+            while (index + 1 < lines.length) {
+                const nextLine = lines[index + 1]!
+
+                if (nextLine !== '' && nextLine[0] !== ' ' && nextLine[0] !== '\t') {
+                    break
+                }
+
+                index += 1
+                blockLines.push(lines[index]!.replace(/^\s+/, ''))
+            }
+
+            frontmatter[key!] = rawValue.startsWith('>')
+                ? blockLines.join(' ').trim()
+                : blockLines.join('\n').trim()
+            continue
+        }
+
+        frontmatter[key!] = parseFrontmatterValue(rawValue)
+    }
+
+    return frontmatter
+}
+
+function parseHeadings(markdown: string): MarkdownHeading[] {
+    const headings: MarkdownHeading[] = []
+    const lines = markdown.split('\n')
+    let offset = 0
+    let fence = ''
+
+    for (const rawLine of lines) {
+        const line = rawLine.endsWith('\r') ? rawLine.slice(0, -1) : rawLine
+        const trimmedLine = line.trimStart()
+        const fenceMarker = trimmedLine.startsWith('```')
+            ? '```'
+            : trimmedLine.startsWith('~~~') ? '~~~' : ''
+
+        if (fenceMarker) {
+            fence = fence === fenceMarker ? '' : fence || fenceMarker
+            offset += rawLine.length + 1
+            continue
+        }
+
+        if (fence) {
+            offset += rawLine.length + 1
+            continue
+        }
+
+        const headingMatch = line.match(/^(#{1,6})[ \t]+/)
+
+        if (!headingMatch) {
+            offset += rawLine.length + 1
+            continue
+        }
+
+        let rawTitle = line.slice(headingMatch[0].length).trim()
+
+        while (rawTitle.endsWith('#')) {
+            rawTitle = rawTitle.slice(0, -1).trimEnd()
+        }
+
+        const anchorMatch = rawTitle.match(/\s*\{#([^}]+)\}\s*$/)
+        const title = rawTitle.replace(/\s*\{#[^}]+\}\s*$/, '').trim()
+
+        headings.push({
+            level: headingMatch[1]!.length,
+            title,
+            anchor: anchorMatch?.[1]?.toLowerCase() ?? '',
+            start: offset,
+            contentStart: offset + line.length,
+        })
+
+        offset += rawLine.length + 1
+    }
+
+    return headings
+}
+
+function getHeadingContent(
+    markdown: string,
+    headings: MarkdownHeading[],
+    headingIndex: number,
+    boundaryLevel: number,
+): string {
+    const heading = headings[headingIndex]
+
+    if (!heading) {
+        return ''
+    }
+
+    const nextHeading = headings
+        .slice(headingIndex + 1)
+        .find(candidate => candidate.level <= boundaryLevel)
+
+    return markdown.slice(heading.contentStart, nextHeading?.start ?? markdown.length).trim()
+}
+
+function normalizeHeadingTitle(title: string): string {
+    return title
+        .replace(/[`*_~]/g, '')
+        .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+        .trim()
+        .toLowerCase()
+}
+
+function getApiSectionName(heading: MarkdownHeading): ApiSectionName | undefined {
+    const anchor = heading.anchor.replace(/^api-/, '')
+
+    if (anchor === 'props' || anchor === 'properties') {
+        return 'properties'
+    }
+    if (anchor === 'events' || anchor === 'event') {
+        return 'events'
+    }
+    if (anchor === 'methods' || anchor === 'method') {
+        return 'methods'
+    }
+
+    const title = normalizeHeadingTitle(heading.title)
+
+    if (['属性', 'property', 'properties', 'props'].includes(title)) {
+        return 'properties'
+    }
+    if (['事件', 'event', 'events'].includes(title)) {
+        return 'events'
+    }
+    if (['方法', 'method', 'methods'].includes(title)) {
+        return 'methods'
+    }
+
+    return undefined
+}
+
+function splitMarkdownTableRow(line: string): string[] {
+    const cells: string[] = []
+    let cell = ''
+    let escaped = false
+    let codeDelimiterLength = 0
+
+    for (let index = 0; index < line.length; index += 1) {
+        const character = line[index]!
+
+        if (escaped) {
+            cell += character
+            escaped = false
+            continue
+        }
+
+        if (character === '\\') {
+            cell += character
+            escaped = true
+            continue
+        }
+
+        if (character === '`') {
+            let delimiterLength = 1
+
+            while (line[index + delimiterLength] === '`') {
+                delimiterLength += 1
+            }
+
+            if (codeDelimiterLength === 0) {
+                codeDelimiterLength = delimiterLength
+            }
+            else if (codeDelimiterLength === delimiterLength) {
+                codeDelimiterLength = 0
+            }
+
+            cell += '`'.repeat(delimiterLength)
+            index += delimiterLength - 1
+            continue
+        }
+
+        if (character === '|' && codeDelimiterLength === 0) {
+            cells.push(cell.trim())
+            cell = ''
+            continue
+        }
+
+        cell += character
+    }
+
+    cells.push(cell.trim())
+
+    if (cells[0] === '') {
+        cells.shift()
+    }
+    if (cells.at(-1) === '') {
+        cells.pop()
+    }
+
+    return cells
+}
+
+function isMarkdownTableSeparator(cells: string[]): boolean {
+    return cells.length > 0 && cells.every(cell => /^:?-{3,}:?$/.test(cell.replace(/\s/g, '')))
+}
+
+function createUniqueColumnNames(columns: string[]): string[] {
+    const occurrences = new Map<string, number>()
+
+    return columns.map((column, index) => {
+        const baseName = column || `column${index + 1}`
+        const occurrence = (occurrences.get(baseName) ?? 0) + 1
+        occurrences.set(baseName, occurrence)
+        return occurrence === 1 ? baseName : `${baseName}_${occurrence}`
+    })
+}
+
+function parseMarkdownTables(markdown: string): MarkdownTableRow[] {
+    const lines = markdown.split(/\r?\n/)
+    const rows: MarkdownTableRow[] = []
+
+    for (let index = 0; index < lines.length - 1; index += 1) {
+        const columns = splitMarkdownTableRow(lines[index]!)
+        const separator = splitMarkdownTableRow(lines[index + 1]!)
+
+        if (!lines[index]!.includes('|') || !isMarkdownTableSeparator(separator)) {
+            continue
+        }
+
+        const uniqueColumns = createUniqueColumnNames(columns)
+        index += 2
+
+        while (index < lines.length && lines[index]!.includes('|')) {
+            const cells = splitMarkdownTableRow(lines[index]!)
+            const row: MarkdownTableRow = {}
+
+            for (const [columnIndex, column] of uniqueColumns.entries()) {
+                row[column] = cells[columnIndex] ?? ''
+            }
+
+            rows.push(row)
+            index += 1
+        }
+
+        index -= 1
+    }
+
+    return rows
+}
+
+function createEmptyParsedApi(): ParsedApi {
+    return {
+        properties: [],
+        events: [],
+        methods: [],
+    }
+}
+
+function parseComponentApi(
+    markdown: string,
+    headings: MarkdownHeading[],
+): { props: ParsedApi, subComponents: ParsedSubComponent[] } {
+    const props = createEmptyParsedApi()
+    const subComponents: ParsedSubComponent[] = []
+    const apiIndex = headings.findIndex(heading =>
+        heading.level === 2
+        && (heading.anchor === 'api' || normalizeHeadingTitle(heading.title) === 'api'),
+    )
+
+    if (apiIndex === -1) {
+        return { props, subComponents }
+    }
+
+    const apiEndIndex = headings.findIndex((heading, index) =>
+        index > apiIndex && heading.level <= 2,
+    )
+    const scopedEndIndex = apiEndIndex === -1 ? headings.length : apiEndIndex
+
+    for (let index = apiIndex + 1; index < scopedEndIndex; index += 1) {
+        const heading = headings[index]!
+
+        if (heading.level !== 3) {
+            continue
+        }
+
+        const directSectionName = getApiSectionName(heading)
+
+        if (directSectionName) {
+            props[directSectionName].push(
+                ...parseMarkdownTables(getHeadingContent(markdown, headings, index, 3)),
+            )
+            continue
+        }
+
+        const subComponentProps = createEmptyParsedApi()
+        const nextSiblingIndex = headings.findIndex((candidate, candidateIndex) =>
+            candidateIndex > index && candidate.level <= 3,
+        )
+        const subComponentEndIndex = nextSiblingIndex === -1
+            ? scopedEndIndex
+            : Math.min(nextSiblingIndex, scopedEndIndex)
+        let hasApiSections = false
+
+        for (let childIndex = index + 1; childIndex < subComponentEndIndex; childIndex += 1) {
+            const childHeading = headings[childIndex]!
+            const sectionName = childHeading.level === 4
+                ? getApiSectionName(childHeading)
+                : undefined
+
+            if (!sectionName) {
+                continue
+            }
+
+            hasApiSections = true
+            subComponentProps[sectionName].push(
+                ...parseMarkdownTables(getHeadingContent(markdown, headings, childIndex, 4)),
+            )
+        }
+
+        if (!hasApiSections) {
+            continue
+        }
+
+        subComponents.push({
+            key: heading.anchor || normalizeHeadingTitle(heading.title),
+            name: heading.title,
+            props: subComponentProps,
+        })
+    }
+
+    return { props, subComponents }
+}
+
+function parseComponentDocument(markdown: string): ParsedComponentDocument {
+    const headings = parseHeadings(markdown)
+    const whenToUseIndex = headings.findIndex(heading =>
+        heading.level === 2 && heading.anchor === 'when-to-use',
+    )
+    const { props, subComponents } = parseComponentApi(markdown, headings)
+
+    return {
+        frontmatter: parseFrontmatter(markdown),
+        whenToUse: whenToUseIndex === -1
+            ? ''
+            : getHeadingContent(markdown, headings, whenToUseIndex, 2),
+        subComponents,
+        props,
+    }
+}
+
+function normalizeTableColumn(column: string): string {
+    return column
+        .replace(/[`*_~]/g, '')
+        .replace(/\s+/g, '')
+        .toLowerCase()
+}
+
+function getTableCell(row: MarkdownTableRow, columns: string[]): string {
+    const normalizedColumns = new Set(columns.map(normalizeTableColumn))
+
+    for (const [column, value] of Object.entries(row)) {
+        if (normalizedColumns.has(normalizeTableColumn(column))) {
+            return value.trim()
+        }
+    }
+
+    return ''
+}
+
+function getTableRowName(row: MarkdownTableRow): string {
+    return getTableCell(row, [
+        'name',
+        'property',
+        'property name',
+        'properties',
+        'event',
+        'event name',
+        'events',
+        'method',
+        'method name',
+        'methods',
+        '名称',
+        '属性',
+        '属性名',
+        '事件',
+        '事件名',
+        '方法',
+        '方法名',
+    ]).replace(/`/g, '').trim()
+}
+
+function getTableRowType(row: MarkdownTableRow): string {
+    return getTableCell(row, ['type', '类型'])
+}
+
+function getTableRowDefault(row: MarkdownTableRow): string {
+    return getTableCell(row, ['default', 'default value', '默认', '默认值'])
+}
+
+function getTableRowDescription(row: MarkdownTableRow): string {
+    return getTableCell(row, ['description', '描述', '说明'])
+}
+
+function normalizeTableRowName(row: MarkdownTableRow): string {
+    return getTableRowName(row).replace(/\s+/g, '').toLowerCase()
+}
+
+function mergeTableRows(
+    enRows: MarkdownTableRow[],
+    zhRows: MarkdownTableRow[],
+): ComponentPropRecord[] {
+    const zhRowsByName = new Map<string, MarkdownTableRow[]>()
+    const usedZhRows = new Set<MarkdownTableRow>()
+
+    for (const zhRow of zhRows) {
+        const name = normalizeTableRowName(zhRow)
+        const rows = zhRowsByName.get(name) ?? []
+        rows.push(zhRow)
+        zhRowsByName.set(name, rows)
+    }
+
+    const records = enRows.map((enRow, index) => {
+        const matchingRows = zhRowsByName.get(normalizeTableRowName(enRow))
+        const zhRow = matchingRows?.find(row => !usedZhRows.has(row))
+            ?? (usedZhRows.has(zhRows[index]!) ? undefined : zhRows[index])
+
+        if (zhRow) {
+            usedZhRows.add(zhRow)
+        }
+
+        return {
+            name: getTableRowName(enRow) || (zhRow ? getTableRowName(zhRow) : ''),
+            type: getTableRowType(enRow) || (zhRow ? getTableRowType(zhRow) : ''),
+            default: getTableRowDefault(enRow) || (zhRow ? getTableRowDefault(zhRow) : ''),
+            description: getTableRowDescription(enRow),
+            descriptionZh: zhRow ? getTableRowDescription(zhRow) : '',
+        }
+    })
+
+    for (const zhRow of zhRows) {
+        if (usedZhRows.has(zhRow)) {
+            continue
+        }
+
+        records.push({
+            name: getTableRowName(zhRow),
+            type: getTableRowType(zhRow),
+            default: getTableRowDefault(zhRow),
+            description: '',
+            descriptionZh: getTableRowDescription(zhRow),
+        })
+    }
+
+    return records
+}
+
+function flattenApi(en: ParsedApi, zh: ParsedApi): ComponentPropRecord[] {
+    return [
+        ...mergeTableRows(en.properties, zh.properties),
+        ...mergeTableRows(en.events, zh.events),
+        ...mergeTableRows(en.methods, zh.methods),
+    ]
+}
+
+function cleanSubComponentName(name: string): string {
+    return name
+        .replace(/[`*_~]/g, '')
+        .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+        .trim()
+}
+
+function createSubComponentRecord(
+    records: Record<string, ComponentPropRecord[]>,
+    subComponentName: string,
+    props: ComponentPropRecord[],
+): void {
+    for (const prop of props) {
+        const key = `${subComponentName}-${prop.name}`
+        const existingProps = records[key] ?? []
+        existingProps.push(prop)
+        records[key] = existingProps
+    }
+}
+
+function localizeSubComponents(
+    enSubComponents: ParsedSubComponent[],
+    zhSubComponents: ParsedSubComponent[],
+): Record<string, ComponentPropRecord[]> {
+    const zhByKey = new Map(zhSubComponents.map(subComponent => [subComponent.key, subComponent]))
+    const usedZhComponents = new Set<ParsedSubComponent>()
+    const records: Record<string, ComponentPropRecord[]> = {}
+
+    for (const [index, enSubComponent] of enSubComponents.entries()) {
+        const zhSubComponent = zhByKey.get(enSubComponent.key) ?? zhSubComponents[index]
+
+        if (zhSubComponent) {
+            usedZhComponents.add(zhSubComponent)
+        }
+
+        createSubComponentRecord(
+            records,
+            cleanSubComponentName(enSubComponent.name),
+            flattenApi(enSubComponent.props, zhSubComponent?.props ?? createEmptyParsedApi()),
+        )
+    }
+
+    for (const zhSubComponent of zhSubComponents) {
+        if (usedZhComponents.has(zhSubComponent)) {
+            continue
+        }
+
+        createSubComponentRecord(
+            records,
+            cleanSubComponentName(zhSubComponent.name),
+            flattenApi(createEmptyParsedApi(), zhSubComponent.props),
+        )
+    }
+
+    return records
+}
+
+function getFrontmatterField(
+    frontmatter: Record<string, string>,
+    field: string,
+    fallbackField?: string,
+): string {
+    return frontmatter[field] ?? (fallbackField ? frontmatter[fallbackField] : undefined) ?? ''
+}
+
+async function readComponent(componentDirectory: string): Promise<ComponentRecord | undefined> {
+    const directory = path.join(COMPONENTS_DIRECTORY, componentDirectory)
+    const enFile = path.join(directory, 'index.en-US.md')
+    const zhFile = path.join(directory, 'index.zh-CN.md')
+    let enMarkdown: string
+    let zhMarkdown: string
+
+    try {
+        [enMarkdown, zhMarkdown] = await Promise.all([
+            fs.readFile(enFile, 'utf8'),
+            fs.readFile(zhFile, 'utf8'),
+        ])
+    }
+    catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+            return undefined
+        }
+        throw error
+    }
+
+    const en = parseComponentDocument(enMarkdown)
+    const zh = parseComponentDocument(zhMarkdown)
+
+    return {
+        name: getFrontmatterField(en.frontmatter, 'name', 'title'),
+        nameZh: getFrontmatterField(zh.frontmatter, 'name', 'title'),
+        category: getFrontmatterField(en.frontmatter, 'category'),
+        categoryZh: getFrontmatterField(zh.frontmatter, 'category'),
+        description: getFrontmatterField(en.frontmatter, 'description'),
+        descriptionZh: getFrontmatterField(zh.frontmatter, 'description'),
+        whenToUse: en.whenToUse,
+        whenToUseZh: zh.whenToUse,
+        subComponents: localizeSubComponents(en.subComponents, zh.subComponents),
+        props: flattenApi(en.props, zh.props),
+    }
+}
+
+async function checkoutSourceVersion(version: string): Promise<void> {
+    try {
+        await fs.access(SOURCE_DIRECTORY)
+    }
+    catch {
+        throw new Error(`Missing source repository: ${SOURCE_DIRECTORY}`)
+    }
+
+    await x('git', [
+        '-C',
+        SOURCE_DIRECTORY,
+        'checkout',
+        '--quiet',
+        `${TAG_PREFIX}${version}`,
+    ], {
+        throwOnError: true,
+        nodeOptions: {
+            stdio: 'pipe',
+        },
+    })
+}
+
+async function readComponentsForVersion(version: string): Promise<ComponentRecord[]> {
+    await checkoutSourceVersion(version)
+
+    const directoryEntries = await fs.readdir(COMPONENTS_DIRECTORY, { withFileTypes: true })
+    const componentDirectories = directoryEntries
+        .filter(entry => entry.isDirectory())
+        .map(entry => entry.name)
+        .sort((left, right) => left.localeCompare(right))
+    const components = await Promise.all(componentDirectories.map(readComponent))
+
+    return components.filter(component => component !== undefined)
+}
+
+function loadComponents(version: string): Promise<ComponentRecord[]> {
+    const cachedComponents = componentCache.get(version)
+
+    if (cachedComponents) {
+        return cachedComponents
+    }
+
+    const components = readComponentsForVersion(version)
+    componentCache.set(version, components)
+    return components
+}
 
 async function fetchTags(majorVersion: number): Promise<ParsedTag[]> {
     const tagPattern = `refs/tags/${TAG_PREFIX}${majorVersion}.*`
@@ -311,14 +1017,15 @@ async function createChangelogFile(
     const highestTag = getHighestBaseVersion(tags)
     const version = getBaseVersion(highestTag)
 
+    const components = await loadComponents(version)
     await fetchTokens(version)
-
     const tokens = await loaderVersionToken(version)
 
     return {
         version,
         majorVersion: `v${highestTag.major}`,
         globalTokens: tokens,
+        components,
         changelog: tags
             .map(tag => createChangelogRecord(tag, publishTimes, changesByVersion)),
     }
