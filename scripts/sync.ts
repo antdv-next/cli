@@ -8,7 +8,7 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc.js'
 import { parse } from 'semver'
 import { x } from 'tinyexec'
-import { fetchTokens } from './tokens'
+import { fetchTokens, loaderVersionToken } from './tokens'
 
 dayjs.extend(utc)
 
@@ -311,7 +311,9 @@ async function createChangelogFile(
     const highestTag = getHighestBaseVersion(tags)
     const version = getBaseVersion(highestTag)
 
-    const tokens = await fetchTokens(version)
+    await fetchTokens(version)
+
+    const tokens = await loaderVersionToken(version)
 
     return {
         version,

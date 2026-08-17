@@ -1,4 +1,4 @@
-import { statSync } from 'node:fs'
+import { existsSync, statSync } from 'node:fs'
 import { mkdir, readFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import process from 'node:process'
@@ -12,12 +12,15 @@ export interface TokenData {
     descriptionZh?: string
 }
 
-export async function fetchTokens(version: string): Promise<TokenData[] | unknown[]> {
+const tmpDir = join(process.cwd(), '.tmp-npm-pack')
+
+export async function fetchTokens(version: string): Promise<void> {
     try {
-        const tmpDir = join(process.cwd(), '.tmp-npm-pack')
-        await mkdir(tmpDir, {
-            recursive: true,
-        })
+        if (!existsSync(tmpDir)) {
+            await mkdir(tmpDir, {
+                recursive: true,
+            })
+        }
 
         console.log(`Fetch token metadata from antdv-next@${version}`)
 
@@ -32,7 +35,6 @@ export async function fetchTokens(version: string): Promise<TokenData[] | unknow
         await mkdir(tempVersionDir, {
             recursive: true,
         })
-        console.log(tempVersionDir)
 
         await x('tar', [
             '-xzf',
@@ -45,8 +47,17 @@ export async function fetchTokens(version: string): Promise<TokenData[] | unknow
                 stdio: 'pipe',
             },
         })
+    }
+    // eslint-disable-next-line unused-imports/no-unused-vars
+    catch (error) {
+    }
+}
 
-        const contentPath = join(tempVersionDir, 'package', 'dist', 'version', 'token-meta.json')
+export async function loaderVersionToken(version: string) {
+    const tempVersionDir = join(tmpDir, `antdv-next-${version}`)
+    console.log(tempVersionDir)
+    const contentPath = join(tempVersionDir, 'package', 'dist', 'version', 'token-meta.json')
+    try {
         if (!statSync(contentPath).isFile()) {
             return []
         }
@@ -64,5 +75,3 @@ export async function fetchTokens(version: string): Promise<TokenData[] | unknow
         return []
     }
 }
-
-console.log(await fetchTokens('1.5.1'))
