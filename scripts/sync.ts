@@ -180,6 +180,18 @@ const MINOR_FILE_PATTERN = /^v(\d+)\.(\d+)\.(\d+)\.json$/
 
 const sourceDataCache = new Map<string, Promise<VersionSourceData>>()
 
+function logStep(scope: string, message: string): void {
+    console.log(`[${scope}] ${message}`)
+}
+
+function logSection(title: string): void {
+    console.log(`\n=== ${title} ===\n`)
+}
+
+function formatDuration(startedAt: number): string {
+    return `${((Date.now() - startedAt) / 1000).toFixed(1)}s`
+}
+
 function parseFrontmatterValue(rawValue: string): string {
     const value = rawValue.trim()
 
@@ -1159,6 +1171,7 @@ async function readDemos(
     enMarkdown: string,
     zhMarkdown: string,
 ): Promise<ComponentDemoRecord[]> {
+    const componentScope = `component:${path.basename(componentDirectory)}`
     const enReferences = parseDemoReferences(enMarkdown)
     const zhReferences = parseDemoReferences(zhMarkdown)
     const enBySrc = new Map(enReferences.map(reference => [reference.src, reference]))
@@ -1180,6 +1193,7 @@ async function readDemos(
         }
         catch (error) {
             if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+                logStep(componentScope, `Skipping missing demo: ${src}`)
                 return undefined
             }
 
@@ -1212,11 +1226,14 @@ async function readComponent(
     tokenMeta: TokenMetaFile,
     tokenDefaults: TokenDefaultIndex,
 ): Promise<ComponentRecord | undefined> {
+    const componentScope = `component:${componentDirectory}`
     const directory = path.join(COMPONENTS_DIRECTORY, componentDirectory)
     const enFile = path.join(directory, 'index.en-US.md')
     const zhFile = path.join(directory, 'index.zh-CN.md')
     let enMarkdown: string
     let zhMarkdown: string
+
+    logStep(componentScope, 'Reading bilingual documentation')
 
     try {
         [enMarkdown, zhMarkdown] = await Promise.all([
@@ -1226,6 +1243,7 @@ async function readComponent(
     }
     catch (error) {
         if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+            logStep(componentScope, 'Skipping component because bilingual documentation is missing')
             return undefined
         }
         throw error
@@ -1235,8 +1253,7 @@ async function readComponent(
     const zh = parseComponentDocument(zhMarkdown)
     const name = getFrontmatterField(en.frontmatter, 'name', 'title')
     const demos = await readDemos(directory, enMarkdown, zhMarkdown)
-
-    return {
+    const component = {
         name,
         nameZh: getFrontmatterField(zh.frontmatter, 'name', 'title'),
         category: getFrontmatterField(en.frontmatter, 'category'),
@@ -1253,9 +1270,64 @@ async function readComponent(
         faq: parseFaq(enMarkdown),
         demos,
     }
+
+    logStep(
+        componentScope,
+        `Parsed ${component.props.length} props, ${component.tokens.length} tokens, ${component.faq.length} FAQs and ${component.demos.length} demos`,
+    )
+
+    return component
+}
+
+async function getCurrentSourceReference(): Promise<string> {
+    const commandOptions = {
+        nodeOptions: {
+            stdio: 'pipe' as const,
+        },
+    }
+    const branch = await x('git', [
+        '-C',
+        SOURCE_DIRECTORY,
+        'symbolic-ref',
+        '--short',
+        '--quiet',
+        'HEAD',
+    ], commandOptions)
+
+    if (branch.exitCode === 0 && branch.stdout.trim()) {
+        return branch.stdout.trim()
+    }
+
+    const tag = await x('git', [
+        '-C',
+        SOURCE_DIRECTORY,
+        'describe',
+        '--tags',
+        '--exact-match',
+        'HEAD',
+    ], commandOptions)
+
+    if (tag.exitCode === 0 && tag.stdout.trim()) {
+        return tag.stdout.trim()
+    }
+
+    const commit = await x('git', [
+        '-C',
+        SOURCE_DIRECTORY,
+        'rev-parse',
+        '--short',
+        'HEAD',
+    ], {
+        ...commandOptions,
+        throwOnError: true,
+    })
+
+    return commit.stdout.trim()
 }
 
 async function checkoutSourceVersion(version: string): Promise<void> {
+    const scope = `source:${version}`
+
     try {
         await fs.access(SOURCE_DIRECTORY)
     }
@@ -1263,18 +1335,25 @@ async function checkoutSourceVersion(version: string): Promise<void> {
         throw new Error(`Missing source repository: ${SOURCE_DIRECTORY}`)
     }
 
+    const currentReference = await getCurrentSourceReference()
+    const targetReference = `${TAG_PREFIX}${version}`
+
+    logStep(scope, `git checkout ${currentReference} -> ${targetReference}`)
+
     await x('git', [
         '-C',
         SOURCE_DIRECTORY,
         'checkout',
         '--quiet',
-        `${TAG_PREFIX}${version}`,
+        targetReference,
     ], {
         throwOnError: true,
         nodeOptions: {
             stdio: 'pipe',
         },
     })
+
+    logStep(scope, 'Git checkout completed')
 }
 
 function getTokenFileCandidates(filename: string): string[] {
@@ -1334,9 +1413,14 @@ async function resolveGeneratedTokenFile(
 }
 
 async function prepareSourceVersion(version: string): Promise<TokenFiles> {
+    const scope = `source:${version}`
+
     await checkoutSourceVersion(version)
+
+    logStep(scope, 'Recording token file modification times')
     const previousModificationTimes = await getTokenFileModificationTimes()
 
+    logStep(scope, 'Running pnpm install')
     await x('pnpm', ['install'], {
         throwOnError: true,
         nodeOptions: {
@@ -1344,7 +1428,9 @@ async function prepareSourceVersion(version: string): Promise<TokenFiles> {
             stdio: 'pipe',
         },
     })
+    logStep(scope, 'Completed pnpm install')
 
+    logStep(scope, `Running pnpm --filter ${PACKAGE_NAME} build:esm`)
     await x('pnpm', ['--filter', PACKAGE_NAME, 'build:esm'], {
         throwOnError: true,
         nodeOptions: {
@@ -1352,7 +1438,9 @@ async function prepareSourceVersion(version: string): Promise<TokenFiles> {
             stdio: 'pipe',
         },
     })
+    logStep(scope, 'Completed ESM build')
 
+    logStep(scope, `Running pnpm --filter ${PACKAGE_NAME} build:token`)
     await x('pnpm', ['--filter', PACKAGE_NAME, 'build:token'], {
         throwOnError: true,
         nodeOptions: {
@@ -1360,31 +1448,49 @@ async function prepareSourceVersion(version: string): Promise<TokenFiles> {
             stdio: 'pipe',
         },
     })
+    logStep(scope, 'Completed token build')
 
+    logStep(scope, 'Resolving generated token files')
     const [tokenMeta, token] = await Promise.all([
         resolveGeneratedTokenFile('token-meta.json', previousModificationTimes),
         resolveGeneratedTokenFile('token.json', previousModificationTimes),
     ])
 
+    logStep(scope, `Resolved token metadata: ${path.relative(SOURCE_DIRECTORY, tokenMeta)}`)
+    logStep(scope, `Resolved token defaults: ${path.relative(SOURCE_DIRECTORY, token)}`)
+
     return { tokenMeta, token }
 }
 
 async function readSourceDataForVersion(version: string): Promise<VersionSourceData> {
+    const scope = `source:${version}`
     const tokenFiles = await prepareSourceVersion(version)
 
+    logStep(scope, 'Reading token metadata and defaults')
     const { tokenMeta, tokenDefaults } = await readTokenData(tokenFiles)
+
+    logStep(scope, `Scanning component directories in ${COMPONENTS_DIRECTORY}`)
     const directoryEntries = await fs.readdir(COMPONENTS_DIRECTORY, { withFileTypes: true })
     const componentDirectories = directoryEntries
         .filter(entry => entry.isDirectory())
         .map(entry => entry.name)
         .sort((left, right) => left.localeCompare(right))
+
+    logStep(scope, `Found ${componentDirectories.length} component directories`)
     const components = await Promise.all(componentDirectories.map(componentDirectory =>
         readComponent(componentDirectory, tokenMeta, tokenDefaults),
     ))
+    const globalTokens = getGlobalTokens(tokenMeta, tokenDefaults)
+    const parsedComponents = components.filter(component => component !== undefined)
+
+    logStep(
+        scope,
+        `Parsed ${parsedComponents.length} components and ${globalTokens.length} global tokens`,
+    )
 
     return {
-        globalTokens: getGlobalTokens(tokenMeta, tokenDefaults),
-        components: components.filter(component => component !== undefined),
+        globalTokens,
+        components: parsedComponents,
     }
 }
 
@@ -1392,16 +1498,21 @@ function loadSourceData(version: string): Promise<VersionSourceData> {
     const cachedSourceData = sourceDataCache.get(version)
 
     if (cachedSourceData) {
+        logStep(`source:${version}`, 'Reusing cached source data')
         return cachedSourceData
     }
 
+    logSection(`Source version: v${version}`)
     const sourceData = readSourceDataForVersion(version)
     sourceDataCache.set(version, sourceData)
     return sourceData
 }
 
 async function fetchTags(majorVersion: number): Promise<ParsedTag[]> {
+    const scope = `remote:v${majorVersion}`
     const tagPattern = `refs/tags/${TAG_PREFIX}${majorVersion}.*`
+
+    logStep(scope, 'Fetching remote repository versions')
     const { stdout } = await x('git', [
         'ls-remote',
         '--tags',
@@ -1417,10 +1528,14 @@ async function fetchTags(majorVersion: number): Promise<ParsedTag[]> {
     })
 
     const lines = stdout.split(/\r?\n/).filter(Boolean)
-    return lines.map(line => parseRemoteTag(line, majorVersion))
+    const tags = lines.map(line => parseRemoteTag(line, majorVersion))
+
+    logStep(scope, `Found ${tags.length} tags`)
+    return tags
 }
 
 async function fetchPublishTimes(): Promise<Map<string, string>> {
+    logStep('npm', `Fetching publish times for ${PACKAGE_NAME}`)
     const { stdout } = await x('npm', [
         'view',
         PACKAGE_NAME,
@@ -1467,6 +1582,7 @@ async function fetchPublishTimes(): Promise<Map<string, string>> {
         throw new Error(`No npm publish times found for ${PACKAGE_NAME}`)
     }
 
+    logStep('npm', `Found publish times for ${publishTimes.size} versions`)
     return publishTimes
 }
 
@@ -1483,6 +1599,7 @@ function isSourceChangelogChange(value: unknown): value is SourceChangelogChange
 }
 
 async function readChangesByVersion(): Promise<Map<string, ChangelogChange[]>> {
+    logStep('changelog', `Reading existing changes from ${CHANGELOG_FILE}`)
     const source = await fs.readFile(CHANGELOG_FILE, 'utf8')
     let data: unknown
 
@@ -1525,6 +1642,7 @@ async function readChangesByVersion(): Promise<Map<string, ChangelogChange[]>> {
         })))
     }
 
+    logStep('changelog', `Loaded changes for ${changesByVersion.size} versions`)
     return changesByVersion
 }
 
@@ -1646,19 +1764,27 @@ async function createChangelogFile(
     tags: ParsedTag[],
     publishTimes: Map<string, string>,
     changesByVersion: Map<string, ChangelogChange[]>,
+    outputScope: string,
 ): Promise<ChangelogFile> {
     const highestTag = getHighestBaseVersion(tags)
     const version = getBaseVersion(highestTag)
 
+    logStep(outputScope, `Selected source version ${version} from ${tags.length} tags`)
     const { components, globalTokens } = await loadSourceData(version)
+    const changelog = tags
+        .map(tag => createChangelogRecord(tag, publishTimes, changesByVersion))
+
+    logStep(
+        outputScope,
+        `Prepared ${components.length} components, ${globalTokens.length} global tokens and ${changelog.length} changelog entries`,
+    )
 
     return {
         version,
         majorVersion: `v${highestTag.major}`,
         globalTokens,
         components,
-        changelog: tags
-            .map(tag => createChangelogRecord(tag, publishTimes, changesByVersion)),
+        changelog,
     }
 }
 
@@ -1687,20 +1813,36 @@ async function buildOutputFiles(
     const outputFiles = new Map<string, ChangelogFile>()
 
     for (const [major, majorTags] of groupTagsByMajor(tags)) {
+        const outputLabel = `v${major}`
+        const outputScope = `output:${outputLabel}`
+
+        logSection(`Output group: ${outputLabel}`)
         outputFiles.set(
             `v${major}.json`,
-            await createChangelogFile(majorTags, publishTimes, changesByVersion),
+            await createChangelogFile(
+                majorTags,
+                publishTimes,
+                changesByVersion,
+                outputScope,
+            ),
         )
+        logStep(outputScope, `Prepared v${major}.json`)
     }
 
     for (const group of groupTagsByMinor(tags)) {
+        const outputLabel = `v${group.major}.${group.minor}.x`
+        const outputScope = `output:${outputLabel}`
+
+        logSection(`Output group: ${outputLabel}`)
         const changelogFile = await createChangelogFile(
             group.tags,
             publishTimes,
             changesByVersion,
+            outputScope,
         )
         const filename = `v${changelogFile.version}.json`
         outputFiles.set(filename, changelogFile)
+        logStep(outputScope, `Prepared ${filename}`)
     }
 
     return outputFiles
@@ -1726,13 +1868,17 @@ async function writeJsonFile(
     data: ChangelogFile | VersionFile,
 ): Promise<void> {
     const file = path.join(OUTPUT_DIRECTORY, filename)
+
+    logStep(`write:${filename}`, `Writing ${file}`)
     await fs.writeFile(file, `${JSON.stringify(data, null, 2)}\n`, 'utf8')
+    logStep(`write:${filename}`, 'Completed')
 }
 
 async function removeStaleMinorFiles(
     expectedFiles: Set<string>,
     syncedMajorVersions: Set<number>,
 ): Promise<void> {
+    logStep('cleanup', `Scanning ${OUTPUT_DIRECTORY} for stale minor-version files`)
     const filenames = await fs.readdir(OUTPUT_DIRECTORY)
     const staleFiles = filenames.filter((filename) => {
         const match = filename.match(MINOR_FILE_PATTERN)
@@ -1743,40 +1889,83 @@ async function removeStaleMinorFiles(
             && !expectedFiles.has(filename)
     })
 
-    await Promise.all(staleFiles.map(filename =>
-        fs.unlink(path.join(OUTPUT_DIRECTORY, filename)),
-    ))
+    if (staleFiles.length === 0) {
+        logStep('cleanup', 'No stale minor-version files found')
+        return
+    }
+
+    for (const filename of staleFiles) {
+        logStep('cleanup', `Removing ${filename}`)
+        await fs.unlink(path.join(OUTPUT_DIRECTORY, filename))
+    }
+
+    logStep('cleanup', `Removed ${staleFiles.length} stale minor-version files`)
 }
 
 async function main(): Promise<void> {
-    const [tagGroups, publishTimes, changesByVersion] = await Promise.all([
-        Promise.all(MAJOR_VERSIONS.map(fetchTags)),
-        fetchPublishTimes(),
-        readChangesByVersion(),
-    ])
+    const startedAt = Date.now()
+    const tagGroups: ParsedTag[][] = []
+
+    logStep('sync', 'Starting synchronization')
+    logStep('sync', `Remote repository: ${REMOTE_URL}`)
+    logStep('sync', `Source directory: ${SOURCE_DIRECTORY}`)
+    logStep('sync', `Output directory: ${OUTPUT_DIRECTORY}`)
+    logStep('sync', `Configured major versions: ${MAJOR_VERSIONS.map(version => `v${version}`).join(', ')}`)
+
+    for (const majorVersion of MAJOR_VERSIONS) {
+        logSection(`Remote tags: v${majorVersion}`)
+        tagGroups.push(await fetchTags(majorVersion))
+    }
+
+    logSection('npm publish times')
+    const publishTimes = await fetchPublishTimes()
+
+    logSection('Existing changelog changes')
+    const changesByVersion = await readChangesByVersion()
     const tags = tagGroups.flat()
 
     if (tags.length === 0) {
         throw new Error(`No tags matched the configured major versions: ${MAJOR_VERSIONS.join(', ')}`)
     }
 
+    logSection('Validation')
+    logStep('sync', `Validating publish times for ${tags.length} tags`)
     assertPublishTimes(tags, publishTimes)
+    logStep('sync', 'All tags have npm publish times')
+
     const outputFiles = await buildOutputFiles(tags, publishTimes, changesByVersion)
+
+    logSection('Version index')
+    logStep('version', 'Creating version.json')
     const versionFile = createVersionFile(tags)
     const syncedMajorVersions = new Set(tags.map(tag => tag.major))
+    logStep('version', `Prepared mappings for ${syncedMajorVersions.size} major versions`)
 
+    logSection('Writing output files')
+    logStep('write', `Ensuring output directory exists: ${OUTPUT_DIRECTORY}`)
     await fs.mkdir(OUTPUT_DIRECTORY, { recursive: true })
-    await Promise.all([
-        ...[...outputFiles].map(([filename, changelog]) =>
-            writeJsonFile(filename, changelog),
-        ),
-        writeJsonFile('version.json', versionFile),
-    ])
+
+    for (const [filename, changelog] of outputFiles) {
+        await writeJsonFile(filename, changelog)
+    }
+
+    await writeJsonFile('version.json', versionFile)
+
+    logSection('Cleanup')
     await removeStaleMinorFiles(new Set(outputFiles.keys()), syncedMajorVersions)
 
-    console.log(
-        `Synced ${tags.length} tags across ${syncedMajorVersions.size} major versions to ${outputFiles.size} changelog files and version.json`,
+    logSection('Synchronization completed')
+    logStep(
+        'sync',
+        `Synced ${tags.length} tags across ${syncedMajorVersions.size} major versions to ${outputFiles.size} changelog files and version.json in ${formatDuration(startedAt)}`,
     )
 }
 
-await main()
+try {
+    await main()
+}
+catch (error) {
+    logSection('Synchronization failed')
+    logStep('sync', error instanceof Error ? error.message : String(error))
+    throw error
+}
