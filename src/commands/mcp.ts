@@ -6,6 +6,7 @@ export default defineCommand({
         description: 'Start MCP server for AI assistant integration',
     },
     run({ args }) {
+        // TODO : stage second development
         console.log('Parsed args:', args)
     },
 })
