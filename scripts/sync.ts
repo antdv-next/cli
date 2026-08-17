@@ -58,6 +58,8 @@ interface ComponentRecord {
     descriptionZh: string
     whenToUse: string
     whenToUseZh: string
+    doc: string
+    docZh: string
     subComponents: Record<string, ComponentPropRecord[]>
     props: ComponentPropRecord[]
 }
@@ -715,6 +717,8 @@ async function readComponent(componentDirectory: string): Promise<ComponentRecor
         descriptionZh: getFrontmatterField(zh.frontmatter, 'description'),
         whenToUse: en.whenToUse,
         whenToUseZh: zh.whenToUse,
+        doc: enMarkdown,
+        docZh: zhMarkdown,
         subComponents: localizeSubComponents(en.subComponents, zh.subComponents),
         props: flattenApi(en.props, zh.props),
     }
