@@ -318,7 +318,6 @@ async function createChangelogFile(
         majorVersion: `v${highestTag.major}`,
         globalTokens: tokens,
         changelog: tags
-            .filter(tag => tag.record.version !== version)
             .map(tag => createChangelogRecord(tag, publishTimes, changesByVersion)),
     }
 }
