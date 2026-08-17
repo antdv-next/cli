@@ -49,6 +49,20 @@ interface ComponentPropRecord {
     descriptionZh: string
 }
 
+interface ComponentFaqRecord {
+    question: string
+    answer: string
+}
+
+interface ComponentDemoRecord {
+    name: string
+    title: string
+    titleZh: string
+    description: string
+    descriptionZh: string
+    code: string
+}
+
 interface ComponentRecord {
     name: string
     nameZh: string
@@ -62,6 +76,40 @@ interface ComponentRecord {
     docZh: string
     subComponents: Record<string, ComponentPropRecord[]>
     props: ComponentPropRecord[]
+    tokens: ComponentPropRecord[]
+    faq: ComponentFaqRecord[]
+    demos: ComponentDemoRecord[]
+}
+
+interface ComponentTokenMeta {
+    source: string
+    token: string
+    type: string
+    desc: string
+    descEn: string
+    name: string
+    nameEn: string
+}
+
+interface TokenMetaFile {
+    components: Record<string, unknown>
+}
+
+interface TokenDefaultIndex {
+    global: Map<string, string>
+    components: Map<string, Map<string, string>>
+}
+
+interface DemoReference {
+    src: string
+    title: string
+}
+
+interface ElementBlock {
+    start: number
+    openingTag: string
+    content: string
+    fullContent: string
 }
 
 interface MarkdownHeading {
@@ -113,6 +161,8 @@ const TAG_PREFIX = `${PACKAGE_NAME}@`
 const OUTPUT_DIRECTORY = fileURLToPath(new URL('../data', import.meta.url))
 const SOURCE_DIRECTORY = fileURLToPath(new URL('../antdv-source', import.meta.url))
 const COMPONENTS_DIRECTORY = path.join(SOURCE_DIRECTORY, 'docs/src/pages/components')
+const TOKEN_META_FILE = path.join(SOURCE_DIRECTORY, 'docs/src/assets/token-meta.json')
+const TOKEN_FILE = path.join(SOURCE_DIRECTORY, 'docs/src/assets/token.json')
 const CHANGELOG_FILE = path.join(OUTPUT_DIRECTORY, 'changelog.json')
 const REMOTE_TAG_PATTERN = /^[0-9a-f]+\s+refs\/tags\/(.+)$/i
 const MINOR_FILE_PATTERN = /^v(\d+)\.(\d+)\.(\d+)\.json$/
@@ -677,6 +727,438 @@ function localizeSubComponents(
     return records
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+function parseTokenMetaFile(value: unknown): TokenMetaFile {
+    if (!isRecord(value) || !isRecord(value.components)) {
+        throw new TypeError(`Invalid token metadata in ${TOKEN_META_FILE}`)
+    }
+
+    return {
+        components: value.components,
+    }
+}
+
+function parseComponentTokenMeta(value: unknown): ComponentTokenMeta | undefined {
+    if (!isRecord(value) || typeof value.token !== 'string') {
+        return undefined
+    }
+
+    return {
+        source: typeof value.source === 'string' ? value.source : '',
+        token: value.token,
+        type: typeof value.type === 'string' ? value.type : '',
+        desc: typeof value.desc === 'string' ? value.desc : '',
+        descEn: typeof value.descEn === 'string' ? value.descEn : '',
+        name: typeof value.name === 'string' ? value.name : '',
+        nameEn: typeof value.nameEn === 'string' ? value.nameEn : '',
+    }
+}
+
+function stringifyTokenDefault(value: unknown): string {
+    if (value === undefined || value === null) {
+        return ''
+    }
+
+    if (typeof value === 'string') {
+        return value
+    }
+
+    if (typeof value === 'number' || typeof value === 'boolean') {
+        return String(value)
+    }
+
+    return JSON.stringify(value)
+}
+
+function getTokenDefaultCandidate(value: unknown): unknown {
+    if (!isRecord(value)) {
+        return value
+    }
+
+    if ('default' in value) {
+        return value.default
+    }
+    if ('defaultValue' in value) {
+        return value.defaultValue
+    }
+    if ('value' in value) {
+        return value.value
+    }
+
+    return undefined
+}
+
+function setTokenDefault(
+    index: TokenDefaultIndex,
+    token: string,
+    value: unknown,
+    componentName?: string,
+): void {
+    const defaultValue = stringifyTokenDefault(value)
+
+    if (componentName) {
+        const componentDefaults = index.components.get(componentName) ?? new Map<string, string>()
+
+        if (!componentDefaults.has(token)) {
+            componentDefaults.set(token, defaultValue)
+        }
+
+        index.components.set(componentName, componentDefaults)
+        return
+    }
+
+    if (!index.global.has(token)) {
+        index.global.set(token, defaultValue)
+    }
+}
+
+function createTokenDefaultIndex(
+    tokenData: unknown,
+    componentNames: Set<string>,
+): TokenDefaultIndex {
+    const index: TokenDefaultIndex = {
+        global: new Map(),
+        components: new Map(),
+    }
+
+    function visit(value: unknown, componentName?: string): void {
+        if (Array.isArray(value)) {
+            for (const item of value) {
+                visit(item, componentName)
+            }
+            return
+        }
+
+        if (!isRecord(value)) {
+            return
+        }
+
+        const token = typeof value.token === 'string'
+            ? value.token
+            : typeof value.name === 'string' ? value.name : undefined
+        const tokenDefault = getTokenDefaultCandidate(value)
+
+        if (token && tokenDefault !== undefined) {
+            setTokenDefault(index, token, tokenDefault, componentName)
+        }
+
+        for (const [key, nestedValue] of Object.entries(value)) {
+            if (key === 'components' && isRecord(nestedValue)) {
+                for (const [nestedComponentName, componentValue] of Object.entries(nestedValue)) {
+                    visit(componentValue, nestedComponentName)
+                }
+                continue
+            }
+
+            const nestedComponentName = componentNames.has(key) ? key : componentName
+            const nestedDefault = getTokenDefaultCandidate(nestedValue)
+
+            if (nestedDefault !== undefined) {
+                setTokenDefault(index, key, nestedDefault, nestedComponentName)
+            }
+
+            visit(nestedValue, nestedComponentName)
+        }
+    }
+
+    visit(tokenData)
+    return index
+}
+
+async function readJsonFile(filename: string): Promise<unknown> {
+    const source = await fs.readFile(filename, 'utf8')
+
+    try {
+        return JSON.parse(source)
+    }
+    catch {
+        throw new Error(`Invalid JSON in ${filename}`)
+    }
+}
+
+async function readTokenData(): Promise<{
+    tokenMeta: TokenMetaFile
+    tokenDefaults: TokenDefaultIndex
+}> {
+    const [rawTokenMeta, tokenData] = await Promise.all([
+        readJsonFile(TOKEN_META_FILE),
+        readJsonFile(TOKEN_FILE),
+    ])
+    const tokenMeta = parseTokenMetaFile(rawTokenMeta)
+
+    return {
+        tokenMeta,
+        tokenDefaults: createTokenDefaultIndex(
+            tokenData,
+            new Set(Object.keys(tokenMeta.components)),
+        ),
+    }
+}
+
+function getComponentTokens(
+    componentName: string,
+    tokenMeta: TokenMetaFile,
+    tokenDefaults: TokenDefaultIndex,
+): ComponentPropRecord[] {
+    const rawTokens = tokenMeta.components[componentName]
+
+    if (!Array.isArray(rawTokens)) {
+        return []
+    }
+
+    return rawTokens
+        .map(parseComponentTokenMeta)
+        .filter(token => token !== undefined)
+        .map(token => ({
+            name: token.token,
+            type: token.type,
+            default: tokenDefaults.components.get(componentName)?.get(token.token)
+                ?? tokenDefaults.global.get(token.token)
+                ?? '',
+            description: token.descEn,
+            descriptionZh: token.desc,
+        }))
+}
+
+function parseFaq(markdown: string): ComponentFaqRecord[] {
+    const headings = parseHeadings(markdown)
+    const faqIndex = headings.findIndex(heading =>
+        heading.level === 2
+        && (heading.anchor === 'faq' || normalizeHeadingTitle(heading.title) === 'faq'),
+    )
+
+    if (faqIndex === -1) {
+        return []
+    }
+
+    const faqEndIndex = headings.findIndex((heading, index) =>
+        index > faqIndex && heading.level <= 2,
+    )
+    const scopedEndIndex = faqEndIndex === -1 ? headings.length : faqEndIndex
+    const faq: ComponentFaqRecord[] = []
+
+    for (let index = faqIndex + 1; index < scopedEndIndex; index += 1) {
+        const heading = headings[index]!
+
+        if (heading.level !== 3) {
+            continue
+        }
+
+        faq.push({
+            question: heading.title,
+            answer: getHeadingContent(markdown, headings, index, 3),
+        })
+    }
+
+    return faq
+}
+
+function findElementStart(source: string, tagName: string, fromIndex: number): number {
+    const marker = `<${tagName}`
+    let index = source.indexOf(marker, fromIndex)
+
+    while (index !== -1) {
+        const boundary = source[index + marker.length]
+
+        if (boundary === '>' || boundary === '/' || boundary === ' ' || boundary === '\t' || boundary === '\n' || boundary === '\r') {
+            return index
+        }
+
+        index = source.indexOf(marker, index + marker.length)
+    }
+
+    return -1
+}
+
+function extractElementBlocks(source: string, tagName: string): ElementBlock[] {
+    const blocks: ElementBlock[] = []
+    let searchIndex = 0
+
+    while (searchIndex < source.length) {
+        const start = findElementStart(source, tagName, searchIndex)
+
+        if (start === -1) {
+            break
+        }
+
+        const openingEnd = source.indexOf('>', start)
+
+        if (openingEnd === -1) {
+            break
+        }
+
+        const openingTag = source.slice(start, openingEnd + 1)
+
+        if (openingTag.trimEnd().endsWith('/>')) {
+            blocks.push({
+                start,
+                openingTag,
+                content: '',
+                fullContent: openingTag,
+            })
+            searchIndex = openingEnd + 1
+            continue
+        }
+
+        let depth = 1
+        let cursor = openingEnd + 1
+        let closingStart = -1
+        let closingEnd = -1
+
+        while (depth > 0) {
+            const nextOpening = findElementStart(source, tagName, cursor)
+            const nextClosing = source.indexOf(`</${tagName}`, cursor)
+
+            if (nextClosing === -1) {
+                break
+            }
+
+            if (nextOpening !== -1 && nextOpening < nextClosing) {
+                const nestedOpeningEnd = source.indexOf('>', nextOpening)
+
+                if (nestedOpeningEnd === -1) {
+                    break
+                }
+
+                if (!source.slice(nextOpening, nestedOpeningEnd + 1).trimEnd().endsWith('/>')) {
+                    depth += 1
+                }
+
+                cursor = nestedOpeningEnd + 1
+                continue
+            }
+
+            closingStart = nextClosing
+            closingEnd = source.indexOf('>', closingStart)
+
+            if (closingEnd === -1) {
+                break
+            }
+
+            depth -= 1
+            cursor = closingEnd + 1
+        }
+
+        if (depth !== 0 || closingStart === -1 || closingEnd === -1) {
+            searchIndex = openingEnd + 1
+            continue
+        }
+
+        blocks.push({
+            start,
+            openingTag,
+            content: source.slice(openingEnd + 1, closingStart),
+            fullContent: source.slice(start, closingEnd + 1),
+        })
+        searchIndex = closingEnd + 1
+    }
+
+    return blocks
+}
+
+function getElementAttribute(openingTag: string, attributeName: string): string {
+    const lowerOpeningTag = openingTag.toLowerCase()
+    const lowerAttributeName = attributeName.toLowerCase()
+    let index = lowerOpeningTag.indexOf(lowerAttributeName)
+
+    while (index !== -1) {
+        const previousCharacter = lowerOpeningTag[index - 1]
+        let cursor = index + lowerAttributeName.length
+
+        if (index > 0 && previousCharacter !== ' ' && previousCharacter !== '\t' && previousCharacter !== '\n' && previousCharacter !== '\r') {
+            index = lowerOpeningTag.indexOf(lowerAttributeName, cursor)
+            continue
+        }
+
+        while (/\s/.test(openingTag[cursor] ?? '')) {
+            cursor += 1
+        }
+
+        if (openingTag[cursor] !== '=') {
+            index = lowerOpeningTag.indexOf(lowerAttributeName, cursor)
+            continue
+        }
+
+        cursor += 1
+
+        while (/\s/.test(openingTag[cursor] ?? '')) {
+            cursor += 1
+        }
+
+        const quote = openingTag[cursor]
+
+        if (quote !== '"' && quote !== '\'') {
+            return ''
+        }
+
+        const valueEnd = openingTag.indexOf(quote, cursor + 1)
+        return valueEnd === -1 ? '' : openingTag.slice(cursor + 1, valueEnd)
+    }
+
+    return ''
+}
+
+function parseDemoReferences(markdown: string): DemoReference[] {
+    return extractElementBlocks(markdown, 'demo')
+        .map(block => ({
+            src: getElementAttribute(block.openingTag, 'src'),
+            title: block.content.trim(),
+        }))
+        .filter(reference => reference.src !== '')
+}
+
+function getDemoDescription(source: string, language: string): string {
+    const docs = extractElementBlocks(source, 'docs')
+        .find(block => getElementAttribute(block.openingTag, 'lang') === language)
+
+    return docs?.content.trim() ?? ''
+}
+
+function getDemoCode(source: string): string {
+    return [
+        ...extractElementBlocks(source, 'script'),
+        ...extractElementBlocks(source, 'template'),
+    ]
+        .sort((left, right) => left.start - right.start)
+        .map(block => block.fullContent.trim())
+        .join('\n\n')
+}
+
+async function readDemos(
+    componentDirectory: string,
+    enMarkdown: string,
+    zhMarkdown: string,
+): Promise<ComponentDemoRecord[]> {
+    const enReferences = parseDemoReferences(enMarkdown)
+    const zhReferences = parseDemoReferences(zhMarkdown)
+    const enBySrc = new Map(enReferences.map(reference => [reference.src, reference]))
+    const zhBySrc = new Map(zhReferences.map(reference => [reference.src, reference]))
+    const sources = [...new Set([...enBySrc.keys(), ...zhBySrc.keys()])]
+
+    return Promise.all(sources.map(async (src) => {
+        const demoFile = path.resolve(componentDirectory, src)
+        const relativeDemoFile = path.relative(componentDirectory, demoFile)
+
+        if (relativeDemoFile.startsWith('..') || path.isAbsolute(relativeDemoFile)) {
+            throw new Error(`Demo source is outside component directory: ${src}`)
+        }
+
+        const source = await fs.readFile(demoFile, 'utf8')
+
+        return {
+            name: path.basename(src, path.extname(src)),
+            title: enBySrc.get(src)?.title ?? '',
+            titleZh: zhBySrc.get(src)?.title ?? '',
+            description: getDemoDescription(source, 'en-US'),
+            descriptionZh: getDemoDescription(source, 'zh-CN'),
+            code: getDemoCode(source),
+        }
+    }))
+}
+
 function getFrontmatterField(
     frontmatter: Record<string, string>,
     field: string,
@@ -685,7 +1167,11 @@ function getFrontmatterField(
     return frontmatter[field] ?? (fallbackField ? frontmatter[fallbackField] : undefined) ?? ''
 }
 
-async function readComponent(componentDirectory: string): Promise<ComponentRecord | undefined> {
+async function readComponent(
+    componentDirectory: string,
+    tokenMeta: TokenMetaFile,
+    tokenDefaults: TokenDefaultIndex,
+): Promise<ComponentRecord | undefined> {
     const directory = path.join(COMPONENTS_DIRECTORY, componentDirectory)
     const enFile = path.join(directory, 'index.en-US.md')
     const zhFile = path.join(directory, 'index.zh-CN.md')
@@ -707,9 +1193,11 @@ async function readComponent(componentDirectory: string): Promise<ComponentRecor
 
     const en = parseComponentDocument(enMarkdown)
     const zh = parseComponentDocument(zhMarkdown)
+    const name = getFrontmatterField(en.frontmatter, 'name', 'title')
+    const demos = await readDemos(directory, enMarkdown, zhMarkdown)
 
     return {
-        name: getFrontmatterField(en.frontmatter, 'name', 'title'),
+        name,
         nameZh: getFrontmatterField(zh.frontmatter, 'name', 'title'),
         category: getFrontmatterField(en.frontmatter, 'category'),
         categoryZh: getFrontmatterField(zh.frontmatter, 'category'),
@@ -721,6 +1209,9 @@ async function readComponent(componentDirectory: string): Promise<ComponentRecor
         docZh: zhMarkdown,
         subComponents: localizeSubComponents(en.subComponents, zh.subComponents),
         props: flattenApi(en.props, zh.props),
+        tokens: getComponentTokens(name, tokenMeta, tokenDefaults),
+        faq: parseFaq(enMarkdown),
+        demos,
     }
 }
 
@@ -746,15 +1237,38 @@ async function checkoutSourceVersion(version: string): Promise<void> {
     })
 }
 
-async function readComponentsForVersion(version: string): Promise<ComponentRecord[]> {
+async function prepareSourceVersion(version: string): Promise<void> {
     await checkoutSourceVersion(version)
 
+    await x('pnpm', ['install'], {
+        throwOnError: true,
+        nodeOptions: {
+            cwd: SOURCE_DIRECTORY,
+            stdio: 'pipe',
+        },
+    })
+
+    await x('pnpm', ['--filter', PACKAGE_NAME, 'build:token'], {
+        throwOnError: true,
+        nodeOptions: {
+            cwd: SOURCE_DIRECTORY,
+            stdio: 'pipe',
+        },
+    })
+}
+
+async function readComponentsForVersion(version: string): Promise<ComponentRecord[]> {
+    await prepareSourceVersion(version)
+
+    const { tokenMeta, tokenDefaults } = await readTokenData()
     const directoryEntries = await fs.readdir(COMPONENTS_DIRECTORY, { withFileTypes: true })
     const componentDirectories = directoryEntries
         .filter(entry => entry.isDirectory())
         .map(entry => entry.name)
         .sort((left, right) => left.localeCompare(right))
-    const components = await Promise.all(componentDirectories.map(readComponent))
+    const components = await Promise.all(componentDirectories.map(componentDirectory =>
+        readComponent(componentDirectory, tokenMeta, tokenDefaults),
+    ))
 
     return components.filter(component => component !== undefined)
 }
