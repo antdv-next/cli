@@ -4,6 +4,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { x } from 'tinyexec'
 
 interface ChangelogItem {
     component: string
@@ -213,6 +214,14 @@ function parseChangelog(markdown: string): ParsedChangelog {
 
 async function main(): Promise<void> {
     const repositoryDirectory = path.join(process.cwd(), 'antdv-source')
+
+    await x('git', ['checkout', 'main'], {
+        throwOnError: true,
+        nodeOptions: {
+            cwd: repositoryDirectory,
+            stdio: 'pipe',
+        },
+    })
 
     const markdown = await fs.readFile(
         path.join(repositoryDirectory, CHANGELOG_FILE),
