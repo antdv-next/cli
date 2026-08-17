@@ -39,15 +39,21 @@ export default defineCommand({
 
             const metaData = await loadVersionMetaData(version)
 
-            const components = metaData.components.filter(c => c.name === capitalize(args.component))
-            if (!components.length) {
-                console.log(`Error: Component ${args.component} not Found`)
+            if (args.component) {
+                const components = metaData.components.filter(c => c.name === capitalize(args.component))
+                if (!components.length) {
+                    console.log(`Error: Component ${args.component} not Found`)
+                    process.exit(1)
+                }
+
+                // TODO show format console
+                console.log(`${capitalize(args.component)} Component Tokens:`)
+                console.log(components.at(-1)?.tokens ?? [])
                 process.exit(1)
             }
 
             // TODO show format console
-            console.log(`${capitalize(args.component)} Component Tokens:`)
-            console.log(components.at(-1)?.tokens ?? [])
+            console.log(metaData.globalTokens)
         }
         // eslint-disable-next-line unused-imports/no-unused-vars
         catch (error) {
