@@ -45,6 +45,7 @@ export default defineCommand({
                 process.exit(1)
             }
 
+            // TODO show format console
             console.log(components.at(-1)?.tokens ?? [])
         }
         // eslint-disable-next-line unused-imports/no-unused-vars
