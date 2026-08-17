@@ -3,6 +3,7 @@ import type { OutputFormat } from '@/args/default.ts'
 export interface ResolvedConfig {
     cwd: string
     format: OutputFormat
+    version: string
 }
 
 export interface PackageInfo {
