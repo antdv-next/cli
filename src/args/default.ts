@@ -13,6 +13,7 @@ export const defaultArgs = {
     ver: {
         type: 'string',
         description: 'Target antdv-next version (e.g. 1.0.0)',
+        default: '',
     },
     format: {
         type: 'enum',
