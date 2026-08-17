@@ -41,3 +41,8 @@ export interface AntdvIssueFields {
     extra: string
     env: ResolvedAntdvVersionEnv
 }
+
+export interface ResolvedVersion {
+    version: string
+    majorVersion: `v${number}`
+}
