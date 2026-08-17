@@ -1,8 +1,9 @@
-import type { CommandArgs, OutputFormat } from '../src/args'
+import type { OptionsArgs } from '../src/args/args'
+import type { OutputFormat } from '../src/args/default'
 import type { ResolvedConfig } from '../src/types'
 import { parseArgs } from 'citty'
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import { defaultArgs, OUTPUT_FORMATS } from '../src/args'
+import { defaultArgs, OUTPUT_FORMATS } from '../src/args/default'
 
 describe('defaultArgs format', () => {
     it('accepts text, markdown, and json', () => {
@@ -25,8 +26,8 @@ describe('defaultArgs format', () => {
             .toThrow(/Expected one of:.*text.*markdown.*json/)
     })
 
-    it('preserves the format union in command and config declarations', () => {
-        expectTypeOf<CommandArgs['format']>().toEqualTypeOf<OutputFormat>()
+    it('preserves the format union in parsed options and resolved config', () => {
+        expectTypeOf<OptionsArgs['format']>().toEqualTypeOf<OutputFormat>()
         expectTypeOf<ResolvedConfig['format']>().toEqualTypeOf<OutputFormat>()
     })
 })

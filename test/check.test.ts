@@ -57,7 +57,7 @@ describe('getLatestVersion', () => {
         expect(vi.getTimerCount()).toBe(0)
     })
 
-    it('reports a clear aggregate error when every source fails', async () => {
+    it('preserves every source error when all registries fail', async () => {
         const fetchMock = vi.fn((input: string | URL | Request) => {
             const url = String(input)
 
@@ -72,13 +72,17 @@ describe('getLatestVersion', () => {
         })
         vi.stubGlobal('fetch', fetchMock)
 
-        const error = await getLatestVersion().catch(error => error)
+        const error: unknown = await getLatestVersion().catch(error => error)
 
         expect(error).toBeInstanceOf(AggregateError)
         expect(error).toMatchObject({
-            message: 'Failed to get the latest @antdv-next/cli version from all registries',
+            message: 'All promises were rejected',
+            errors: [
+                expect.objectContaining({ message: 'network unavailable' }),
+                expect.objectContaining({ message: `Request to ${URLS[1]} failed with status 503` }),
+                expect.objectContaining({ message: `Request to ${URLS[2]} returned an invalid version` }),
+            ],
         })
-        expect(error.errors).toHaveLength(3)
     })
 
     it('returns 0.0.0 and aborts the remaining requests when the package is not found', async () => {
@@ -118,12 +122,18 @@ describe('getLatestVersion', () => {
         })
         vi.stubGlobal('fetch', fetchMock)
 
-        const rejection = expect(getLatestVersion()).rejects.toThrow(
-            'Failed to get the latest @antdv-next/cli version from all registries',
-        )
+        const result = getLatestVersion().catch((error: unknown) => error)
 
         await vi.advanceTimersByTimeAsync(5_000)
-        await rejection
+        const error = await result
+
+        expect(error).toBeInstanceOf(AggregateError)
+        expect(error).toMatchObject({
+            message: 'All promises were rejected',
+            errors: URLS.map(url => expect.objectContaining({
+                message: `Request to ${url} timed out after 5000ms`,
+            })),
+        })
         expect(signals).toHaveLength(3)
         expect(signals.every(signal => signal.aborted)).toBe(true)
         expect(vi.getTimerCount()).toBe(0)

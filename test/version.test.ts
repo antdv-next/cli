@@ -1,3 +1,4 @@
+import type { ResolvedConfig } from '../src/types'
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { getPackageInfo } from 'local-pkg'
@@ -11,6 +12,14 @@ vi.mock('local-pkg', () => ({
 const dataPath = join(import.meta.dirname, '.version-test-data')
 const mockedGetPackageInfo = vi.mocked(getPackageInfo)
 
+function createConfig(version = '', cwd = '/project'): ResolvedConfig {
+    return {
+        cwd,
+        format: 'text',
+        version,
+    }
+}
+
 beforeEach(async () => {
     mockedGetPackageInfo.mockReset()
     await mkdir(dataPath, { recursive: true })
@@ -22,17 +31,19 @@ afterEach(async () => {
 
 describe('resolveVersion', () => {
     it('resolves and normalizes an explicitly provided version', async () => {
-        await expect(resolveVersion(' v1.2.3-beta.1 ', '/project')).resolves.toEqual({
-            version: '1.2.3-beta.1',
+        await expect(resolveVersion(createConfig(' v1.2.3 '))).resolves.toEqual({
+            version: '1.2.3',
             majorVersion: 'v1',
         })
         expect(mockedGetPackageInfo).not.toHaveBeenCalled()
     })
 
-    it('rejects an invalid explicitly provided version', async () => {
-        await expect(resolveVersion('latest', '/project')).rejects.toThrow(
-            'Invalid antdv-next version: latest',
-        )
+    it('returns an empty sentinel when an explicit version cannot be coerced', async () => {
+        await expect(resolveVersion(createConfig('latest'))).resolves.toEqual({
+            version: '',
+            majorVersion: 'v0',
+        })
+        expect(mockedGetPackageInfo).not.toHaveBeenCalled()
     })
 
     it('resolves antdv-next from the provided project path', async () => {
@@ -44,7 +55,7 @@ describe('resolveVersion', () => {
             packageJson: {},
         })
 
-        await expect(resolveVersion(undefined, '/project')).resolves.toEqual({
+        await expect(resolveVersion(createConfig())).resolves.toEqual({
             version: '2.4.1',
             majorVersion: 'v2',
         })
