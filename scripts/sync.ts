@@ -148,7 +148,7 @@ interface ParsedComponentDocument {
     props: ParsedApi
 }
 
-type VersionFile = [Record<string, Record<string, string>>]
+type VersionFile = Record<string, Record<string, string>>
 
 interface ParsedTag {
     record: VersionRecord
@@ -1860,7 +1860,7 @@ function createVersionFile(tags: ParsedTag[]): VersionFile {
         versions[majorVersion] = minorVersions
     }
 
-    return [versions]
+    return versions
 }
 
 async function writeJsonFile(
