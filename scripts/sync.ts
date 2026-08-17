@@ -1,6 +1,5 @@
 // @env node
 
-import type { TokenData } from './tokens'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -8,7 +7,6 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc.js'
 import { parse } from 'semver'
 import { x } from 'tinyexec'
-import { fetchTokens, loaderVersionToken } from './tokens'
 
 dayjs.extend(utc)
 
@@ -33,7 +31,7 @@ interface ChangelogRecord extends VersionRecord {
 }
 
 interface ChangelogFile extends VersionRecord {
-    globalTokens: TokenData[] | unknown[]
+    globalTokens: ComponentPropRecord[]
     components: ComponentRecord[]
     changelog: ChangelogRecord[]
 }
@@ -92,6 +90,7 @@ interface ComponentTokenMeta {
 }
 
 interface TokenMetaFile {
+    global: Record<string, unknown>
     components: Record<string, unknown>
 }
 
@@ -103,6 +102,11 @@ interface TokenDefaultIndex {
 interface TokenFiles {
     tokenMeta: string
     token: string
+}
+
+interface VersionSourceData {
+    globalTokens: ComponentPropRecord[]
+    components: ComponentRecord[]
 }
 
 interface DemoReference {
@@ -174,7 +178,7 @@ const CHANGELOG_FILE = path.join(OUTPUT_DIRECTORY, 'changelog.json')
 const REMOTE_TAG_PATTERN = /^[0-9a-f]+\s+refs\/tags\/(.+)$/i
 const MINOR_FILE_PATTERN = /^v(\d+)\.(\d+)\.(\d+)\.json$/
 
-const componentCache = new Map<string, Promise<ComponentRecord[]>>()
+const sourceDataCache = new Map<string, Promise<VersionSourceData>>()
 
 function parseFrontmatterValue(rawValue: string): string {
     const value = rawValue.trim()
@@ -744,6 +748,7 @@ function parseTokenMetaFile(value: unknown, filename: string): TokenMetaFile {
     }
 
     return {
+        global: isRecord(value.global) ? value.global : {},
         components: value.components,
     }
 }
@@ -927,6 +932,21 @@ function getComponentTokens(
                 ?? '',
             description: token.descEn,
             descriptionZh: token.desc,
+        }))
+}
+
+function getGlobalTokens(
+    tokenMeta: TokenMetaFile,
+    tokenDefaults: TokenDefaultIndex,
+): ComponentPropRecord[] {
+    return Object.entries(tokenMeta.global)
+        .filter((entry): entry is [string, Record<string, unknown>] => isRecord(entry[1]))
+        .map(([name, metadata]) => ({
+            name,
+            type: typeof metadata.type === 'string' ? metadata.type : '',
+            default: tokenDefaults.global.get(name) ?? '',
+            description: typeof metadata.descEn === 'string' ? metadata.descEn : '',
+            descriptionZh: typeof metadata.desc === 'string' ? metadata.desc : '',
         }))
 }
 
@@ -1349,7 +1369,7 @@ async function prepareSourceVersion(version: string): Promise<TokenFiles> {
     return { tokenMeta, token }
 }
 
-async function readComponentsForVersion(version: string): Promise<ComponentRecord[]> {
+async function readSourceDataForVersion(version: string): Promise<VersionSourceData> {
     const tokenFiles = await prepareSourceVersion(version)
 
     const { tokenMeta, tokenDefaults } = await readTokenData(tokenFiles)
@@ -1362,19 +1382,22 @@ async function readComponentsForVersion(version: string): Promise<ComponentRecor
         readComponent(componentDirectory, tokenMeta, tokenDefaults),
     ))
 
-    return components.filter(component => component !== undefined)
+    return {
+        globalTokens: getGlobalTokens(tokenMeta, tokenDefaults),
+        components: components.filter(component => component !== undefined),
+    }
 }
 
-function loadComponents(version: string): Promise<ComponentRecord[]> {
-    const cachedComponents = componentCache.get(version)
+function loadSourceData(version: string): Promise<VersionSourceData> {
+    const cachedSourceData = sourceDataCache.get(version)
 
-    if (cachedComponents) {
-        return cachedComponents
+    if (cachedSourceData) {
+        return cachedSourceData
     }
 
-    const components = readComponentsForVersion(version)
-    componentCache.set(version, components)
-    return components
+    const sourceData = readSourceDataForVersion(version)
+    sourceDataCache.set(version, sourceData)
+    return sourceData
 }
 
 async function fetchTags(majorVersion: number): Promise<ParsedTag[]> {
@@ -1627,14 +1650,12 @@ async function createChangelogFile(
     const highestTag = getHighestBaseVersion(tags)
     const version = getBaseVersion(highestTag)
 
-    const components = await loadComponents(version)
-    await fetchTokens(version)
-    const tokens = await loaderVersionToken(version)
+    const { components, globalTokens } = await loadSourceData(version)
 
     return {
         version,
         majorVersion: `v${highestTag.major}`,
-        globalTokens: tokens,
+        globalTokens,
         components,
         changelog: tags
             .map(tag => createChangelogRecord(tag, publishTimes, changesByVersion)),
