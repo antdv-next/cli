@@ -46,6 +46,7 @@ export default defineCommand({
             }
 
             // TODO show format console
+            console.log(`${capitalize(args.component)} Component Tokens:`)
             console.log(components.at(-1)?.tokens ?? [])
         }
         // eslint-disable-next-line unused-imports/no-unused-vars
