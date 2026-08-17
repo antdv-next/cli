@@ -4,7 +4,6 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import { downloadTemplate } from 'giget'
 
 interface ChangelogItem {
     component: string
@@ -28,7 +27,6 @@ interface ParsedChangelog {
     listItemCount: number
 }
 
-const REPOSITORY_SOURCE = 'github:antdv-next/antdv-next#main'
 const CHANGELOG_FILE = 'docs/src/pages/components/changelog.en-US.md'
 const OUTPUT_FILE = fileURLToPath(new URL('../data/changelog.json', import.meta.url))
 const VERSION_HEADING_PATTERN = /^##[ \t]+v?(\d+\.\d+\.\d+(?:-[a-z0-9.-]+)?(?:\+[a-z0-9.-]+)?)(?:[ \t]+-[ \t]+(\d{4}-\d{2}-\d{2}))?[ \t]*$/gim
@@ -214,48 +212,39 @@ function parseChangelog(markdown: string): ParsedChangelog {
 }
 
 async function main(): Promise<void> {
-    const repositoryDirectory = path.join(process.cwd(), 'repository')
+    const repositoryDirectory = path.join(process.cwd(), 'antdv-source')
 
-    try {
-        const downloadedRepository = await downloadTemplate(REPOSITORY_SOURCE, {
-            dir: repositoryDirectory,
-            silent: true,
-        })
-        const markdown = await fs.readFile(
-            path.join(downloadedRepository.dir, CHANGELOG_FILE),
-            'utf8',
-        )
-        const { records: changelogs, listItemCount } = parseChangelog(markdown)
-        const changelogItemCount = changelogs.reduce(
-            (count, changelog) => count + changelog.changelog.length,
-            0,
-        )
-        const skippedItemCount = listItemCount - changelogItemCount
+    const markdown = await fs.readFile(
+        path.join(repositoryDirectory, CHANGELOG_FILE),
+        'utf8',
+    )
+    const { records: changelogs, listItemCount } = parseChangelog(markdown)
+    const changelogItemCount = changelogs.reduce(
+        (count, changelog) => count + changelog.changelog.length,
+        0,
+    )
+    const skippedItemCount = listItemCount - changelogItemCount
 
-        if (changelogItemCount === 0) {
-            throw new Error(`No conventional-commit changelog items found in ${CHANGELOG_FILE}`)
-        }
+    if (changelogItemCount === 0) {
+        throw new Error(`No conventional-commit changelog items found in ${CHANGELOG_FILE}`)
+    }
 
-        if (skippedItemCount > 0) {
-            console.warn(
-                `Skipped ${skippedItemCount} list items without conventional-commit metadata`,
-            )
-        }
-
-        await fs.mkdir(path.dirname(OUTPUT_FILE), { recursive: true })
-        await fs.writeFile(
-            OUTPUT_FILE,
-            `${JSON.stringify(changelogs, null, 2)}\n`,
-            'utf8',
-        )
-
-        console.log(
-            `Wrote ${changelogs.length} releases with ${changelogItemCount} changelog items to ${OUTPUT_FILE}`,
+    if (skippedItemCount > 0) {
+        console.warn(
+            `Skipped ${skippedItemCount} list items without conventional-commit metadata`,
         )
     }
-    finally {
-        await fs.rm(repositoryDirectory, { recursive: true, force: true })
-    }
+
+    await fs.mkdir(path.dirname(OUTPUT_FILE), { recursive: true })
+    await fs.writeFile(
+        OUTPUT_FILE,
+        `${JSON.stringify(changelogs, null, 2)}\n`,
+        'utf8',
+    )
+
+    console.log(
+        `Wrote ${changelogs.length} releases with ${changelogItemCount} changelog items to ${OUTPUT_FILE}`,
+    )
 }
 
 await main()
