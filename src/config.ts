@@ -5,5 +5,6 @@ export const resolveConfig = (options: OptionsArgs): ResolvedConfig => {
     return {
         cwd: options.cwd,
         format: options.format,
+        version: options.ver,
     }
 }
