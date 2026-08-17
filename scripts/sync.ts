@@ -100,6 +100,11 @@ interface TokenDefaultIndex {
     components: Map<string, Map<string, string>>
 }
 
+interface TokenFiles {
+    tokenMeta: string
+    token: string
+}
+
 interface DemoReference {
     src: string
     title: string
@@ -161,8 +166,10 @@ const TAG_PREFIX = `${PACKAGE_NAME}@`
 const OUTPUT_DIRECTORY = fileURLToPath(new URL('../data', import.meta.url))
 const SOURCE_DIRECTORY = fileURLToPath(new URL('../antdv-source', import.meta.url))
 const COMPONENTS_DIRECTORY = path.join(SOURCE_DIRECTORY, 'docs/src/pages/components')
-const TOKEN_META_FILE = path.join(SOURCE_DIRECTORY, 'docs/src/assets/token-meta.json')
-const TOKEN_FILE = path.join(SOURCE_DIRECTORY, 'docs/src/assets/token.json')
+const TOKEN_DIRECTORIES = [
+    path.join(SOURCE_DIRECTORY, 'docs/src/assets'),
+    path.join(SOURCE_DIRECTORY, 'playground/src/assets'),
+]
 const CHANGELOG_FILE = path.join(OUTPUT_DIRECTORY, 'changelog.json')
 const REMOTE_TAG_PATTERN = /^[0-9a-f]+\s+refs\/tags\/(.+)$/i
 const MINOR_FILE_PATTERN = /^v(\d+)\.(\d+)\.(\d+)\.json$/
@@ -731,9 +738,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
     return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
-function parseTokenMetaFile(value: unknown): TokenMetaFile {
+function parseTokenMetaFile(value: unknown, filename: string): TokenMetaFile {
     if (!isRecord(value) || !isRecord(value.components)) {
-        throw new TypeError(`Invalid token metadata in ${TOKEN_META_FILE}`)
+        throw new TypeError(`Invalid token metadata in ${filename}`)
     }
 
     return {
@@ -879,15 +886,15 @@ async function readJsonFile(filename: string): Promise<unknown> {
     }
 }
 
-async function readTokenData(): Promise<{
+async function readTokenData(tokenFiles: TokenFiles): Promise<{
     tokenMeta: TokenMetaFile
     tokenDefaults: TokenDefaultIndex
 }> {
     const [rawTokenMeta, tokenData] = await Promise.all([
-        readJsonFile(TOKEN_META_FILE),
-        readJsonFile(TOKEN_FILE),
+        readJsonFile(tokenFiles.tokenMeta),
+        readJsonFile(tokenFiles.token),
     ])
-    const tokenMeta = parseTokenMetaFile(rawTokenMeta)
+    const tokenMeta = parseTokenMetaFile(rawTokenMeta, tokenFiles.tokenMeta)
 
     return {
         tokenMeta,
@@ -1138,7 +1145,7 @@ async function readDemos(
     const zhBySrc = new Map(zhReferences.map(reference => [reference.src, reference]))
     const sources = [...new Set([...enBySrc.keys(), ...zhBySrc.keys()])]
 
-    return Promise.all(sources.map(async (src) => {
+    const demos = await Promise.all(sources.map(async (src): Promise<ComponentDemoRecord | undefined> => {
         const demoFile = path.resolve(componentDirectory, src)
         const relativeDemoFile = path.relative(componentDirectory, demoFile)
 
@@ -1146,7 +1153,18 @@ async function readDemos(
             throw new Error(`Demo source is outside component directory: ${src}`)
         }
 
-        const source = await fs.readFile(demoFile, 'utf8')
+        let source: string
+
+        try {
+            source = await fs.readFile(demoFile, 'utf8')
+        }
+        catch (error) {
+            if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+                return undefined
+            }
+
+            throw error
+        }
 
         return {
             name: path.basename(src, path.extname(src)),
@@ -1157,6 +1175,8 @@ async function readDemos(
             code: getDemoCode(source),
         }
     }))
+
+    return demos.filter(demo => demo !== undefined)
 }
 
 function getFrontmatterField(
@@ -1237,10 +1257,75 @@ async function checkoutSourceVersion(version: string): Promise<void> {
     })
 }
 
-async function prepareSourceVersion(version: string): Promise<void> {
+function getTokenFileCandidates(filename: string): string[] {
+    return TOKEN_DIRECTORIES.map(directory => path.join(directory, filename))
+}
+
+async function getFileModificationTime(filename: string): Promise<number | undefined> {
+    try {
+        return (await fs.stat(filename)).mtimeMs
+    }
+    catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+            return undefined
+        }
+
+        throw error
+    }
+}
+
+async function getTokenFileModificationTimes(): Promise<Map<string, number | undefined>> {
+    const candidates = [
+        ...getTokenFileCandidates('token-meta.json'),
+        ...getTokenFileCandidates('token.json'),
+    ]
+    const modificationTimes = await Promise.all(candidates.map(getFileModificationTime))
+    const result = new Map<string, number | undefined>()
+
+    for (const [index, filename] of candidates.entries()) {
+        result.set(filename, modificationTimes[index])
+    }
+
+    return result
+}
+
+async function resolveGeneratedTokenFile(
+    filename: string,
+    previousModificationTimes: Map<string, number | undefined>,
+): Promise<string> {
+    const candidates = getTokenFileCandidates(filename)
+    const currentFiles = (await Promise.all(candidates.map(async candidate => ({
+        filename: candidate,
+        modificationTime: await getFileModificationTime(candidate),
+    }))))
+        .filter(file => file.modificationTime !== undefined)
+        .sort((left, right) => right.modificationTime! - left.modificationTime!)
+    const generatedFile = currentFiles.find(file =>
+        file.modificationTime !== previousModificationTimes.get(file.filename),
+    )
+
+    if (generatedFile) {
+        return generatedFile.filename
+    }
+
+    throw new Error(
+        `Token build did not update ${filename} in: ${TOKEN_DIRECTORIES.join(', ')}`,
+    )
+}
+
+async function prepareSourceVersion(version: string): Promise<TokenFiles> {
     await checkoutSourceVersion(version)
+    const previousModificationTimes = await getTokenFileModificationTimes()
 
     await x('pnpm', ['install'], {
+        throwOnError: true,
+        nodeOptions: {
+            cwd: SOURCE_DIRECTORY,
+            stdio: 'pipe',
+        },
+    })
+
+    await x('pnpm', ['--filter', PACKAGE_NAME, 'build:esm'], {
         throwOnError: true,
         nodeOptions: {
             cwd: SOURCE_DIRECTORY,
@@ -1255,12 +1340,19 @@ async function prepareSourceVersion(version: string): Promise<void> {
             stdio: 'pipe',
         },
     })
+
+    const [tokenMeta, token] = await Promise.all([
+        resolveGeneratedTokenFile('token-meta.json', previousModificationTimes),
+        resolveGeneratedTokenFile('token.json', previousModificationTimes),
+    ])
+
+    return { tokenMeta, token }
 }
 
 async function readComponentsForVersion(version: string): Promise<ComponentRecord[]> {
-    await prepareSourceVersion(version)
+    const tokenFiles = await prepareSourceVersion(version)
 
-    const { tokenMeta, tokenDefaults } = await readTokenData()
+    const { tokenMeta, tokenDefaults } = await readTokenData(tokenFiles)
     const directoryEntries = await fs.readdir(COMPONENTS_DIRECTORY, { withFileTypes: true })
     const componentDirectories = directoryEntries
         .filter(entry => entry.isDirectory())
