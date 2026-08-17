@@ -1,5 +1,6 @@
 // @env node
 
+import type { TokenData } from './tokens'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -7,6 +8,7 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc.js'
 import { parse } from 'semver'
 import { x } from 'tinyexec'
+import { fetchTokens } from './tokens'
 
 dayjs.extend(utc)
 
@@ -31,7 +33,7 @@ interface ChangelogRecord extends VersionRecord {
 }
 
 interface ChangelogFile extends VersionRecord {
-    globalTokens: unknown[]
+    globalTokens: TokenData[] | unknown[]
     changelog: ChangelogRecord[]
 }
 
@@ -301,18 +303,20 @@ function assertPublishTimes(
     }
 }
 
-function createChangelogFile(
+async function createChangelogFile(
     tags: ParsedTag[],
     publishTimes: Map<string, string>,
     changesByVersion: Map<string, ChangelogChange[]>,
-): ChangelogFile {
+): Promise<ChangelogFile> {
     const highestTag = getHighestBaseVersion(tags)
     const version = getBaseVersion(highestTag)
+
+    const tokens = await fetchTokens(version)
 
     return {
         version,
         majorVersion: `v${highestTag.major}`,
-        globalTokens: [],
+        globalTokens: tokens,
         changelog: tags
             .filter(tag => tag.record.version !== version)
             .map(tag => createChangelogRecord(tag, publishTimes, changesByVersion)),
@@ -336,22 +340,22 @@ function groupTagsByMajor(tags: ParsedTag[]): Map<number, ParsedTag[]> {
     return groups
 }
 
-function buildOutputFiles(
+async function buildOutputFiles(
     tags: ParsedTag[],
     publishTimes: Map<string, string>,
     changesByVersion: Map<string, ChangelogChange[]>,
-): Map<string, ChangelogFile> {
+): Promise<Map<string, ChangelogFile>> {
     const outputFiles = new Map<string, ChangelogFile>()
 
     for (const [major, majorTags] of groupTagsByMajor(tags)) {
         outputFiles.set(
             `v${major}.json`,
-            createChangelogFile(majorTags, publishTimes, changesByVersion),
+            await createChangelogFile(majorTags, publishTimes, changesByVersion),
         )
     }
 
     for (const group of groupTagsByMinor(tags)) {
-        const changelogFile = createChangelogFile(
+        const changelogFile = await createChangelogFile(
             group.tags,
             publishTimes,
             changesByVersion,
@@ -418,7 +422,7 @@ async function main(): Promise<void> {
     }
 
     assertPublishTimes(tags, publishTimes)
-    const outputFiles = buildOutputFiles(tags, publishTimes, changesByVersion)
+    const outputFiles = await buildOutputFiles(tags, publishTimes, changesByVersion)
     const versionFile = createVersionFile(tags)
     const syncedMajorVersions = new Set(tags.map(tag => tag.major))
 
