@@ -1936,7 +1936,7 @@ async function main(): Promise<void> {
     const outputFiles = await buildOutputFiles(tags, publishTimes, changesByVersion)
 
     logSection('Version index')
-    logStep('version', 'Creating version.json')
+    logStep('version', 'Creating versions.json')
     const versionFile = createVersionFile(tags)
     const syncedMajorVersions = new Set(tags.map(tag => tag.major))
     logStep('version', `Prepared mappings for ${syncedMajorVersions.size} major versions`)
@@ -1949,7 +1949,7 @@ async function main(): Promise<void> {
         await writeJsonFile(filename, changelog)
     }
 
-    await writeJsonFile('version.json', versionFile)
+    await writeJsonFile('versions.json', versionFile)
 
     logSection('Cleanup')
     await removeStaleMinorFiles(new Set(outputFiles.keys()), syncedMajorVersions)
@@ -1957,7 +1957,7 @@ async function main(): Promise<void> {
     logSection('Synchronization completed')
     logStep(
         'sync',
-        `Synced ${tags.length} tags across ${syncedMajorVersions.size} major versions to ${outputFiles.size} changelog files and version.json in ${formatDuration(startedAt)}`,
+        `Synced ${tags.length} tags across ${syncedMajorVersions.size} major versions to ${outputFiles.size} changelog files and versions.json in ${formatDuration(startedAt)}`,
     )
 }
 
