@@ -76,7 +76,7 @@ Agent 会自动完成 `npm install`、`npx skills add`，并开始使用 CLI。
 {
   "mcpServers": {
     "antd": {
-      "command": "antd",
+      "command": "antdv",
       "args": ["mcp"]
     }
   }
