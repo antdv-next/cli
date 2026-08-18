@@ -244,11 +244,11 @@ jobs:
           const report = [
             '## Build Size Report',
             '',
-            '### 改动前',
+            'Baseline Artifact · 基准产物',
             '',
             beforeTable,
             '',
-            '### 改动后',
+            'Candidate Artifact · 候选产物',
             '',
             afterTable,
             '',
