@@ -167,7 +167,6 @@ describe('scanEcosystem', () => {
         await writeProjectPackage({
             dependencies: {
                 '@antdv-next/cssinjs': '^2.0.0',
-                '@antdv-next/pro-components': '^1.4.0',
                 'unrelated-package': '^9.0.0',
             },
             devDependencies: {
@@ -185,7 +184,6 @@ describe('scanEcosystem', () => {
         await Promise.all([
             writePackage('@antdv-next/cssinjs', '2.0.0'),
             writePackage('@antdv-next/icons', '3.0.0'),
-            writePackage('@antdv-next/pro-components', '1.4.0'),
             writePackage('@v-c/dialog', '5.0.0'),
             writePackage('@v-c/no-version'),
             writePackage('@v-c/optional', '2.0.0'),
@@ -195,7 +193,6 @@ describe('scanEcosystem', () => {
         ])
 
         await expect(scanEcosystem(projectPath)).resolves.toEqual({
-            '@antdv-next/pro-components': '1.4.0',
             '@v-c/dialog': '5.0.0',
             '@v-c/optional': '2.0.0',
             '@v-c/peer': '4.0.0',
