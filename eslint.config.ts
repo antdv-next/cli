@@ -1,5 +1,6 @@
 import type { Linter } from 'eslint'
 import antfu from '@antfu/eslint-config'
+import vuoto from 'eslint-plugin-vuoto'
 
 const config = antfu({
     type: 'lib',
@@ -18,6 +19,14 @@ const config = antfu({
         overrides: {
             'yaml/indent': ['error', 2],
         },
+    },
+}, {
+    name: 'custom/vuoto',
+    plugins: {
+        vuoto,
+    },
+    rules: {
+        'vuoto/zero-width': 'error',
     },
 }) as Linter.Config
 
