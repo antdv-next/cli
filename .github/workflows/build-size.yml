@@ -2,8 +2,8 @@ name: Build size
 
 on:
   pull_request:
-#    paths:
-#      - 'src/**'
+    paths:
+      - 'src/**'
 
 permissions:
   contents: read
