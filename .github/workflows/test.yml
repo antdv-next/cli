@@ -24,5 +24,8 @@ jobs:
       - name: Install
         run: pnpm i
 
+      - name: Build
+        run: pnpm build
+
       - name: Test
         run: pnpm run test -- --maxWorkers=2 --shard=${{matrix.shard}}
