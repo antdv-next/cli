@@ -30,6 +30,7 @@ vi.mock('tinyexec', () => ({
 }))
 
 let projectPath: string
+const mockProjectPath = join(tmpdir(), 'antdv-cli-env-mock')
 
 async function writePackage(packageName: string, version?: string): Promise<void> {
   const packageDirectory = join(projectPath, 'node_modules', packageName)
@@ -48,15 +49,20 @@ async function writeProjectPackage(packageJson: Record<string, unknown>): Promis
   }))
 }
 
-beforeEach(async () => {
-  projectPath = await fs.mkdtemp(join(tmpdir(), 'antdv-cli-env-'))
+beforeEach(() => {
   vi.clearAllMocks()
 })
 
-afterEach(async () => await fs.rm(projectPath, {
-  recursive: true,
-  force: true,
-}))
+function useProjectFixture(): void {
+  beforeEach(async () => {
+    projectPath = await fs.mkdtemp(join(tmpdir(), 'antdv-cli-env-'))
+  })
+
+  afterEach(async () => await fs.rm(projectPath, {
+    recursive: true,
+    force: true,
+  }))
+}
 
 describe('collectEnvinfo', () => {
   it('normalizes envinfo values and adds the project npm registry', async () => {
@@ -73,7 +79,7 @@ describe('collectEnvinfo', () => {
     })
 
     const result = await collectEnvinfo({
-      cwd: projectPath,
+      cwd: mockProjectPath,
       format: 'text',
     })
 
@@ -91,7 +97,7 @@ describe('collectEnvinfo', () => {
     expect(mocks.x).toHaveBeenCalledWith('npm', ['config', 'get', 'registry'], {
       timeout: 5000,
       nodeOptions: {
-        cwd: projectPath,
+        cwd: mockProjectPath,
         stdio: 'pipe',
       },
     })
@@ -106,7 +112,7 @@ describe('collectEnvinfo', () => {
     mocks.x.mockRejectedValueOnce(new Error('npm not found'))
 
     const result = await collectEnvinfo({
-      cwd: projectPath,
+      cwd: mockProjectPath,
       format: 'text',
     })
 
@@ -120,7 +126,7 @@ describe('collectEnvinfo', () => {
     mocks.envinfoRun.mockRejectedValueOnce(new Error('envinfo failed'))
 
     const result = await collectEnvinfo({
-      cwd: projectPath,
+      cwd: mockProjectPath,
       format: 'text',
     })
 
@@ -130,6 +136,8 @@ describe('collectEnvinfo', () => {
 })
 
 describe('getInstalledPackageVersion', () => {
+  useProjectFixture()
+
   it('reads the package version from the target project', async () => {
     await writePackage('antdv-next', '1.2.3')
 
@@ -145,6 +153,8 @@ describe('getInstalledPackageVersion', () => {
 })
 
 describe('collectDependencies', () => {
+  useProjectFixture()
+
   it('reports only the four antdv core dependencies and includes missing packages', async () => {
     await Promise.all([
       writePackage('antdv-next', '1.0.0'),
@@ -163,6 +173,8 @@ describe('collectDependencies', () => {
 })
 
 describe('scanEcosystem', () => {
+  useProjectFixture()
+
   it('collects declared non-core @antdv-next and @v-c packages', async () => {
     await writeProjectPackage({
       dependencies: {
@@ -207,6 +219,8 @@ describe('scanEcosystem', () => {
 })
 
 describe('collectBuildTools', () => {
+  useProjectFixture()
+
   it('reports only the requested installed build tools', async () => {
     const versions = {
       vue: '3.5.0',
