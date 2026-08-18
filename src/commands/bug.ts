@@ -8,32 +8,32 @@ import { buildIssueUrl, collectAntdvEnv, createIssueBody } from '@/utils/issue.t
 import { output } from '@/utils/output.ts'
 
 export async function createBug(repo: string, args: ParsedArgs<typeof defaultArgs> & ParsedArgs<typeof bugArgs>): Promise<void> {
-    const env = await collectAntdvEnv(args.cwd)
+  const env = await collectAntdvEnv(args.cwd)
 
-    if (args.reproduction.length > 1 && !isUrl(args.reproduction)) {
-        console.log('Please provide a valid URL for the reproduction link.')
-        process.exit(1)
-    }
+  if (args.reproduction.length > 1 && !isUrl(args.reproduction)) {
+    console.log('Please provide a valid URL for the reproduction link.')
+    process.exit(1)
+  }
 
-    const body = createIssueBody({
-        reproduction: args.reproduction,
-        steps: args.steps,
-        expected: args.expected,
-        actual: args.actual,
-        extra: args.extra,
-        env,
-    })
+  const body = createIssueBody({
+    reproduction: args.reproduction,
+    steps: args.steps,
+    expected: args.expected,
+    actual: args.actual,
+    extra: args.extra,
+    env,
+  })
 
-    const url = buildIssueUrl(args.title, repo, body)
+  const url = buildIssueUrl(args.title, repo, body)
 
-    output({
-        json: {
-            repo,
-            title: args.title,
-            body,
-            url,
-        },
-        text: `Repository: ${repo}
+  output({
+    json: {
+      repo,
+      title: args.title,
+      body,
+      url,
+    },
+    text: `Repository: ${repo}
 Title: ${args.title}
 
 --- Issue Body ---
@@ -41,20 +41,20 @@ ${body}
 --- Issue End ---
 
 To submit, re-run with --submit flag.\n`,
-        markdown: body,
-    }, args.format)
+    markdown: body,
+  }, args.format)
 }
 
 export default defineCommand({
-    meta: {
-        name: 'bug',
-        description: 'Report a bug to the antdv-next repository',
-    },
-    args: {
-        ...defaultArgs,
-        ...bugArgs,
-    },
-    async run({ args }) {
-        await createBug(ANTDV_REPO, args)
-    },
+  meta: {
+    name: 'bug',
+    description: 'Report a bug to the antdv-next repository',
+  },
+  args: {
+    ...defaultArgs,
+    ...bugArgs,
+  },
+  async run({ args }) {
+    await createBug(ANTDV_REPO, args)
+  },
 })

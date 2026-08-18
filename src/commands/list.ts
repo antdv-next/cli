@@ -9,54 +9,54 @@ import { output } from '@/utils/output.ts'
 import { resolveVersion } from '@/utils/version.ts'
 
 function outputMarkdown(components: ComponentRecord[]): string {
-    let context = '| Component | Name | Description |\n'
-    context += '| --- | --- | --- |\n'
+  let context = '| Component | Name | Description |\n'
+  context += '| --- | --- | --- |\n'
 
-    components.forEach((component) => {
-        context += `| ${component.name} | ${component.nameZh} | ${component.description} |\n`
-    })
+  components.forEach((component) => {
+    context += `| ${component.name} | ${component.nameZh} | ${component.description} |\n`
+  })
 
-    return context
+  return context
 }
 
 function outputTable(components: ComponentRecord[]): string {
-    const p = new Table({
-        style: tableBorderStyle,
-        columns: [
-            { name: 'Component', alignment: 'left' },
-            { name: 'Name', alignment: 'left' },
-            { name: 'Description', alignment: 'left' },
-        ],
-    })
+  const p = new Table({
+    style: tableBorderStyle,
+    columns: [
+      { name: 'Component', alignment: 'left' },
+      { name: 'Name', alignment: 'left' },
+      { name: 'Description', alignment: 'left' },
+    ],
+  })
 
-    components.forEach((component) => {
-        p.addRow({
-            Component: component.name,
-            Name: component.nameZh,
-            Description: component.description,
-        })
+  components.forEach((component) => {
+    p.addRow({
+      Component: component.name,
+      Name: component.nameZh,
+      Description: component.description,
     })
+  })
 
-    return p.render()
+  return p.render()
 }
 
 export default defineCommand({
-    meta: {
-        name: 'list',
-        description: 'List all components with bilingual names, descriptions, and first-supported version',
-    },
-    args: defaultArgs,
-    async run({ args }) {
-        const config = resolveConfig(args)
-        const version = await resolveVersion(config)
+  meta: {
+    name: 'list',
+    description: 'List all components with bilingual names, descriptions, and first-supported version',
+  },
+  args: defaultArgs,
+  async run({ args }) {
+    const config = resolveConfig(args)
+    const version = await resolveVersion(config)
 
-        const metaData = await loadVersionMetaData(version)
-        const components = metaData.components
+    const metaData = await loadVersionMetaData(version)
+    const components = metaData.components
 
-        output({
-            text: outputTable(components),
-            json: components,
-            markdown: outputMarkdown(components),
-        }, args.format)
-    },
+    output({
+      text: outputTable(components),
+      json: components,
+      markdown: outputMarkdown(components),
+    }, args.format)
+  },
 })

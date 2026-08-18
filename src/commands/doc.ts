@@ -1,13 +1,13 @@
 import { defineCommand } from 'citty'
 
 export default defineCommand({
-    meta: {
-        name: 'doc',
-        description: 'Output the full API documentation for a component in markdown',
-    },
-    run({ args }) {
-        // TODO antd doc <Component>
-        // 组件完整 Markdown 文档
-        console.log('Parsed args:', args)
-    },
+  meta: {
+    name: 'doc',
+    description: 'Output the full API documentation for a component in markdown',
+  },
+  run({ args }) {
+    // TODO antd doc <Component>
+    // 组件完整 Markdown 文档
+    console.log('Parsed args:', args)
+  },
 })
