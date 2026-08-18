@@ -31,7 +31,7 @@ npx skills add @antdv-next/cli # install as an agent skill
 ## ✨ 亮点
 
 - 📦 **完全离线** — 所有元数据随包安装，无需网络请求，无延迟，无 API Key。
-- 🎯 **版本精确** — 查询 antdv@5.3.0 的精确 API，而非仅 "latest"。
+- 🎯 **版本精确** — 查询 antdv-next@x.y.z 的精确 API，而非仅 "latest"。
 - 🤖 **Agent 优化** — 所有命令支持 `--format json`。结构化错误码与修复建议。stdout/stderr 严格分离。
 - 🔮 **智能纠错** — 输入 `Buttn`？CLI 基于 Levenshtein 距离建议 `Button`，优先匹配首字母相同的候选。
 - 🔌 **MCP 服务** — `antdv mcp` 启动 stdio 服务，原生集成 Claude Desktop、Cursor 等 IDE。
@@ -83,7 +83,7 @@ Agent 会自动完成 `npm install`、`npx skills add`，并开始使用 CLI。
 }
 ```
 
-如需固定 antdv 版本，在 `args` 数组中添加 `"--ver", "1.5.1"`。
+如需固定 antdv-next 版本，在 `args` 数组中添加 `"--ver", "1.5.1"`。
 
 提供 8 个工具（`antdv_list`、`antdv_info`、`antdv_doc`、`antdv_demo`、`antdv_token`、`antdv_design_md`、`antdv_semantic`、`antdv_changelog`）和 2 个提示词（`antdv-expert`、`antdv-page-generator`）。
 
