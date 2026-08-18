@@ -19,7 +19,7 @@ Code Agent（Claude Code、Codex、Gemini CLI）在拥有即时 API 数据访问
 正是为此而生 — antdv next 的每个 Prop、Token、Demo 和 Changelog 条目，本地打包，毫秒级查询。
 
 ```bash
-npx skills add antdv-next/antdv-next-cli    # install as an agent skill
+npx skills add @antdv-next/cli # install as an agent skill
 ```
 
 <br>
@@ -27,10 +27,10 @@ npx skills add antdv-next/antdv-next-cli    # install as an agent skill
 ## ✨ 亮点
 
 - 📦 **完全离线** — 所有元数据随包安装，无需网络请求，无延迟，无 API Key。
+- 🎯 **版本精确** — 查询 antdv@5.3.0 的精确 API，而非仅 "latest"。
 - 🤖 **Agent 优化** — 所有命令支持 `--format json`。结构化错误码与修复建议。stdout/stderr 严格分离。
-- 🌍 **双语输出** — 每个组件名、描述和文档均有中英文。通过 `--lang zh` 切换。
 - 🔮 **智能纠错** — 输入 `Buttn`？CLI 基于 Levenshtein 距离建议 `Button`，优先匹配首字母相同的候选。
-- 🔌 **MCP 服务** — `antd mcp` 启动 stdio 服务，原生集成 Claude Desktop、Cursor 等 IDE。
+- 🔌 **MCP 服务** — `antdv mcp` 启动 stdio 服务，原生集成 Claude Desktop、Cursor 等 IDE。
 
 ## 📦 安装
 
@@ -79,7 +79,7 @@ Agent 会自动完成 `npm install`、`npx skills add`，并开始使用 CLI。
 }
 ```
 
-如需固定 antd 版本，在 `args` 数组中添加 `"--version", "5.20.0"`。
+如需固定 antdv 版本，在 `args` 数组中添加 `"--ver", "1.5.1"`。
 
 提供 8 个工具（`antdv_list`、`antdv_info`、`antdv_doc`、`antdv_demo`、`antdv_token`、`antdv_design_md`、`antdv_semantic`、`antdv_changelog`）和 2 个提示词（`antdv-expert`、`antdv-page-generator`）。
 
@@ -90,23 +90,22 @@ Agent 会自动完成 `npm install`、`npx skills add`，并开始使用 CLI。
 ## 🚀 快速开始
 
 ```bash
-antdv list                           # 所有组件及版本信息
-antdv info Button                    # 组件 Props、类型、默认值
-antdv doc Button                     # 完整 Markdown 文档
-antdv demo Select basic              # 可运行的 Demo 源码
-antdv token DatePicker               # Design Token 值（v5+）
-antdv design.md                      # 设计语言文档（design.md）
-antdv semantic Table                 # classNames / styles 结构
-antdv changelog 4.24.0 5.0.0 Select  # 跨版本 API 差异对比
-antdv doctor                         # 诊断项目配置问题
-antdv env                            # 收集环境信息用于 Bug 报告
-antdv usage ./src                    # 分析项目中的 antd 导入
-antdv lint ./src                     # 检查废弃 API 和最佳实践
-antdv migrate 3 4                    # v3 → v4 迁移指南
-antdv migrate 4 5 --apply ./src      # 生成 Agent 迁移提示
-antdv mcp                            # 启动 MCP 服务，供 IDE 集成
-antdv setup --client claude          # 为 AI Agent 接入 MCP/Skill
-antdv upgrade                        # 升级 CLI 到最新版本
+antdv list                                   # 所有组件及版本信息
+antdv info Button                            # 组件 Props、类型、默认值
+antdv doc Button                             # 完整 Markdown 文档
+antdv demo Select basic                      # 可运行的 Demo 源码
+antdv token DatePicker                       # Design Token 值（v5+）
+antdv design.md                              # 设计语言文档（design.md）
+antdv semantic Table                         # classNames / styles 结构
+antdv changelog 1.0.0 1.5.1 Select           # 跨版本 API 差异对比
+antdv doctor                                 # 诊断项目配置问题
+antdv env                                    # 收集环境信息用于 Bug 报告
+antdv usage ./src                            # 分析项目中的 antd 导入
+antdv lint ./src                             # 检查废弃 API 和最佳实践
+antdv migrate 1.0.0 1.5.1 --apply ./src      # 生成 Agent 迁移提示
+antdv mcp                                    # 启动 MCP 服务，供 IDE 集成
+antdv setup --client claude                  # 为 AI Agent 接入 MCP/Skill
+antdv upgrade                                # 升级 CLI 到最新版本
 ```
 
 
