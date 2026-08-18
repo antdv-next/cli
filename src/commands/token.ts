@@ -73,7 +73,6 @@ export default defineCommand({
                     process.exit(1)
                 }
 
-                // TODO show format console
                 if (args.format !== 'json') {
                     console.log(`${capitalize(args.component)} Component Tokens:`)
                 }
