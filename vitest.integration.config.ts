@@ -1,6 +1,5 @@
 import { createVitestConfig } from './vitest.shared.ts'
 
 export default createVitestConfig({
-  include: ['./test/**/*.{test,spec}.ts'],
-  exclude: ['./test/integration/**'],
+  include: ['./test/integration/**/*.{test,spec}.ts'],
 })

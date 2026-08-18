@@ -42,6 +42,8 @@
     "prepare": "simple-git-hooks",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:integration": "pnpm build && vitest run --config vitest.integration.config.ts",
+    "test:all": "pnpm test && pnpm test:integration",
     "generate-changelog": "tsx ./scripts/changelog.ts",
     "extract": "tsx ./scripts/sync.ts"
   },
