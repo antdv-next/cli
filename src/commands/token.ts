@@ -1,7 +1,4 @@
-import type { ChangelogFile, ComponentPropRecord } from '#/components.ts'
-import type { ResolvedVersion } from '@/types.ts'
-import { readFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import type { ComponentPropRecord } from '#/components.ts'
 import process from 'node:process'
 import { defineCommand } from 'citty'
 import { Table } from 'console-table-printer'
@@ -10,18 +7,9 @@ import { tokenArgs } from '@/args/token.ts'
 import { resolveConfig } from '@/config.ts'
 import { tableBorderStyle } from '@/constants/table.ts'
 import capitalize from '@/utils/capitalize.ts'
-import { getDataPath } from '@/utils/loader.ts'
+import { loadVersionMetaData } from '@/utils/loader.ts'
 import { output } from '@/utils/output.ts'
 import { resolveVersion } from '@/utils/version.ts'
-
-async function loadVersionMetaData(version: ResolvedVersion): Promise<ChangelogFile> {
-    const versionsPath = join(getDataPath(), 'versions.json')
-    const versionsIndex = JSON.parse(await readFile(versionsPath, 'utf-8'))
-    if (!Object.values(versionsIndex[version.majorVersion]).includes(version.version)) {
-        throw new Error(`v${version.version} not found`)
-    }
-    return JSON.parse(await readFile(join(getDataPath(), `v${version.version}.json`), 'utf-8')) as ChangelogFile
-}
 
 function outputTokenTable(tokens: ComponentPropRecord[]): string {
     const p = new Table({
