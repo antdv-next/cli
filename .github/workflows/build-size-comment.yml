@@ -1,0 +1,202 @@
+name: Build size comment
+
+on:
+  workflow_run:
+    workflows:
+      - Build size
+    types:
+      - completed
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  comment:
+    name: Comment on pull request commit
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Download size artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: build-size-${{ github.event.workflow_run.id }}
+          path: ${{ runner.temp }}/build-size-artifact
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Read artifact metadata
+        id: metadata
+        env:
+          METADATA_PATH: ${{ runner.temp }}/build-size-artifact/metadata.json
+        run: |
+          node <<'NODE'
+          import { appendFile, readFile } from 'node:fs/promises'
+
+          const metadata = JSON.parse(await readFile(process.env.METADATA_PATH, 'utf8'))
+
+          if (!Number.isInteger(metadata.prNumber) || metadata.prNumber <= 0) {
+            throw new Error('Invalid pull request number in artifact metadata')
+          }
+
+          if (typeof metadata.headSha !== 'string' || !/^[0-9a-f]{40}$/.test(metadata.headSha)) {
+            throw new Error('Invalid head SHA in artifact metadata')
+          }
+
+          await appendFile(process.env.GITHUB_OUTPUT, `pr_number=${metadata.prNumber}\n`)
+          await appendFile(process.env.GITHUB_OUTPUT, `head_sha=${metadata.headSha}\n`)
+          NODE
+
+      - name: Verify pull request metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ steps.metadata.outputs.head_sha }}
+          PR_NUMBER: ${{ steps.metadata.outputs.pr_number }}
+          RUN_HEAD_REPOSITORY: ${{ github.event.workflow_run.head_repository.full_name }}
+          RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          actual_head_sha=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" \
+            --jq '.head.sha')
+          actual_head_repository=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" \
+            --jq '.head.repo.full_name')
+          actual_base_repository=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" \
+            --jq '.base.repo.full_name')
+          actual_state=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" \
+            --jq '.state')
+
+          if [ "$HEAD_SHA" != "$RUN_HEAD_SHA" ]; then
+            echo "Artifact head SHA does not match workflow run head SHA" >&2
+            exit 1
+          fi
+
+          if [ "$actual_head_sha" != "$HEAD_SHA" ]; then
+            echo "Artifact head SHA does not match pull request head SHA" >&2
+            exit 1
+          fi
+
+          if [ "$actual_head_repository" != "$RUN_HEAD_REPOSITORY" ]; then
+            echo "Artifact pull request does not match workflow run repository" >&2
+            exit 1
+          fi
+
+          if [ "$actual_base_repository" != "$GITHUB_REPOSITORY" ]; then
+            echo "Artifact pull request does not target this repository" >&2
+            exit 1
+          fi
+
+          if [ "$actual_state" != "open" ]; then
+            echo "Pull request is no longer open" >&2
+            exit 1
+          fi
+
+      - name: Generate size report
+        env:
+          AFTER_DIST: ${{ runner.temp }}/build-size-artifact/after-dist
+          BEFORE_DIST: ${{ runner.temp }}/build-size-artifact/before-dist
+        run: |
+          node <<'NODE'
+          import { brotliCompressSync, constants, gzipSync } from 'node:zlib'
+          import { readdir, readFile, writeFile } from 'node:fs/promises'
+          import path from 'node:path'
+
+          const formatSize = (bytes) => {
+            const units = ['B', 'KiB', 'MiB', 'GiB']
+            let value = bytes
+            let unit = 0
+
+            while (value >= 1024 && unit < units.length - 1) {
+              value /= 1024
+              unit += 1
+            }
+
+            const digits = unit === 0 ? 0 : 2
+            return `${value.toFixed(digits)} ${units[unit]}`
+          }
+
+          const listFiles = async (directory, root = directory) => {
+            const entries = await readdir(directory, { withFileTypes: true })
+            const files = []
+
+            for (const entry of entries) {
+              const absolutePath = path.join(directory, entry.name)
+
+              if (entry.isDirectory()) {
+                files.push(...await listFiles(absolutePath, root))
+              }
+              else if (entry.isFile()) {
+                files.push({
+                  absolutePath,
+                  relativePath: path.relative(root, absolutePath).split(path.sep).join('/'),
+                })
+              }
+            }
+
+            return files
+          }
+
+          const createTable = async (directory) => {
+            const files = await listFiles(directory)
+            files.sort((a, b) => a.relativePath < b.relativePath ? -1 : a.relativePath > b.relativePath ? 1 : 0)
+
+            const rows = [
+              '| File | Size | Gzip | Brotli |',
+              '| --- | ---: | ---: | ---: |',
+            ]
+
+            for (const file of files) {
+              const contents = await readFile(file.absolutePath)
+              const gzipSize = gzipSync(contents, { level: 9 }).byteLength
+              const brotliSize = brotliCompressSync(contents, {
+                params: {
+                  [constants.BROTLI_PARAM_QUALITY]: 11,
+                },
+              }).byteLength
+              const fileName = file.relativePath.replaceAll('|', '\\|')
+
+              rows.push(`| ${fileName} | ${formatSize(contents.byteLength)} | ${formatSize(gzipSize)} | ${formatSize(brotliSize)} |`)
+            }
+
+            return rows.join('\n')
+          }
+
+          const beforeTable = await createTable(process.env.BEFORE_DIST)
+          const afterTable = await createTable(process.env.AFTER_DIST)
+          const report = [
+            '### 改动前',
+            '',
+            beforeTable,
+            '',
+            '### 改动后：',
+            '',
+            afterTable,
+            '',
+            '<!-- build-size-report -->',
+          ].join('\n')
+
+          await writeFile('build-size-report.md', report)
+          NODE
+
+      - name: Comment on pull request commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ steps.metadata.outputs.head_sha }}
+        run: |
+          comment_id=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/commits/${HEAD_SHA}/comments?per_page=100" \
+            --jq '[.[] | select(.user.login == "github-actions[bot]") | select(.body | contains("<!-- build-size-report -->"))] | first | .id // empty')
+
+          if [ -n "$comment_id" ]; then
+            gh api --method PATCH \
+              "repos/${GITHUB_REPOSITORY}/comments/${comment_id}" \
+              --raw-field body="$(< build-size-report.md)"
+          else
+            gh api --method POST \
+              "repos/${GITHUB_REPOSITORY}/commits/${HEAD_SHA}/comments" \
+              --raw-field body="$(< build-size-report.md)"
+          fi
