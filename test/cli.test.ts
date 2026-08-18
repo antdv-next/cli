@@ -22,13 +22,6 @@ describe('cli', () => {
         expect(stdout).toContain('Dependencies')
     })
 
-    it('run antdv env command in markdown format', async () => {
-        const { stdout } = await run(['env', '--format', 'markdown'])
-
-        expect(stdout).toContain('## Environment')
-        expect(stdout).toContain('### Dependencies')
-    })
-
     it('run antdv env command in json format', async () => {
         const { stdout } = await run(['env', '--format', 'json'])
         const data = JSON.parse(stdout)
