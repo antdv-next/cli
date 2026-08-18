@@ -1,0 +1,2754 @@
+[
+    {
+        "version": "1.5.1",
+        "date": "2026-08-14",
+        "changelog": [
+            {
+                "component": "",
+                "type": "feat",
+                "description": "expose `nativeElement` refs on ~20 components — Avatar.Group, Badge.Ribbon, Breadcrumb, Calendar, Card.Grid, Card.Meta, Carousel, Descriptions, Divider, Empty, FloatButton.Group, QRCode, Result, Skeleton, Space.Compact, Spin, Splitter, Transfer and Watermark — with the ref types exported from the entry (#58627~#58667)"
+            },
+            {
+                "component": "form",
+                "type": "feat",
+                "description": "rule `message` accepts a render function `() => VueNode`; it is kept as-is through validation and only invoked while rendering the error, so any reactive state it reads (locale, i18n, ...) updates the displayed message without re-running validators; works with form-level and computed `rules` as well ([#714](https://github.com/antdv-next/antdv-next/pull/714))"
+            },
+            {
+                "component": "tree",
+                "type": "feat",
+                "description": "`scrollTo` supports `autoExpand`, add `Tree.useTree` and export `TreeInstance` / `UseTreeConfig` (#58841)"
+            },
+            {
+                "component": "table",
+                "type": "feat",
+                "description": "support `forceRender` for expandable rows (#58860)"
+            },
+            {
+                "component": "float-button",
+                "type": "feat",
+                "description": "BackTop gains `showProgress`, rendering scroll progress as a ring (#58894)"
+            },
+            {
+                "component": "pagination",
+                "type": "feat",
+                "description": "add `components.sizeChanger` to customize the size changer (#58831)"
+            },
+            {
+                "component": "mentions",
+                "type": "feat",
+                "description": "support `popupRender` to customize the dropdown (#58582)"
+            },
+            {
+                "component": "input",
+                "type": "feat",
+                "description": "ConfigProvider variant config supports the `inputSearch` / `inputPassword` / `otp` subcomponents, each resolving its own config first (#58784)"
+            },
+            {
+                "component": "tooltip, popover, popconfirm",
+                "type": "feat",
+                "description": "`mouseEnterDelay` / `mouseLeaveDelay` configurable globally via ConfigProvider (#58892)"
+            },
+            {
+                "component": "theme",
+                "type": "feat",
+                "description": "add the `focusOutline` seed token for shared focus styles, honored by Input, Select, Rate, Splitter and Steps; Alert gains a `borderRadius` component token (#58647, #58708, #57765)"
+            },
+            {
+                "component": "image",
+                "type": "feat",
+                "description": "preview supports `wheel` to control mouse-wheel zoom (`@v-c/image@1.1.0`, #58728)"
+            },
+            {
+                "component": "border-beam",
+                "type": "feat",
+                "description": "add `count` to configure the number of beams, evenly distributed (#58691)"
+            },
+            {
+                "component": "locale",
+                "type": "feat",
+                "description": "add Albanian `sq_AL`; refine Traditional Chinese terminology and use Taiwan week wording in DatePicker (#58618, #58947, #58951)"
+            },
+            {
+                "component": "form",
+                "type": "fix",
+                "description": "rules combining `required` and `type` no longer run type validation twice; FormItem `required` no longer derives a validation rule and only drives the required mark, aligning with antd"
+            },
+            {
+                "component": "form",
+                "type": "fix",
+                "description": "function rules resolve with the form instance as argument and are re-resolved on every validation, so they can read the latest external state"
+            },
+            {
+                "component": "form",
+                "type": "fix",
+                "description": "form controls now carry `aria-required` and link help and error text via `aria-describedby`"
+            },
+            {
+                "component": "table",
+                "type": "fix",
+                "description": "an explicitly placed `Table.EXPAND_COLUMN` no longer loses its identity through `ref()` / `reactive()` proxies, removing the phantom empty column (`@v-c/table@1.2.0`)"
+            },
+            {
+                "component": "tree-select",
+                "type": "fix",
+                "description": "preserve the selection state of disabled child nodes (`@v-c/tree-select@1.1.2`)"
+            },
+            {
+                "component": "select",
+                "type": "fix",
+                "description": "the clear icon is reachable by keyboard (`@v-c/select@1.2.1`)"
+            },
+            {
+                "component": "virtual-list",
+                "type": "fix",
+                "description": "`scrollTo({ key })` resolves against the latest data and retries after a data update (`@v-c/virtual-list@1.1.1`)"
+            },
+            {
+                "component": "carousel",
+                "type": "fix",
+                "description": "keep the current slide when children are added instead of resetting to the first (#58845)"
+            },
+            {
+                "component": "drawer",
+                "type": "fix",
+                "description": "support a disabled close button (#58853)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "correct semantic style priority — ConfigProvider's root `style` now sits between context styles and component styles across 20+ components including Badge, Calendar, ColorPicker, DatePicker, Drawer, Dropdown and Modal; also fixes Divider spreading the whole semantic styles object onto its root, Masonry dropping component-level `styles.root`, and the message Holder merge order (#58550, #58564)"
+            },
+            {
+                "component": "config-provider",
+                "type": "fix",
+                "description": "the `inputSearch` component config previously never reached the context and was silently dead; it now applies"
+            },
+            {
+                "component": "typography",
+                "type": "fix",
+                "description": "restore the interactive ellipsis tooltip — hovering the popup no longer dismisses it (#58661, #58722)"
+            },
+            {
+                "component": "button",
+                "type": "fix",
+                "description": "align loading icon styles, dropping the redundant centering and block declarations (#58712)"
+            },
+            {
+                "component": "types",
+                "type": "fix",
+                "description": "export the missing `UploadRef`, `StatisticRef` and `SliderRef` types (#58700, #58798)"
+            },
+            {
+                "component": "site",
+                "type": "fix",
+                "description": "harden mainland China detection for the docs site switch"
+            },
+            {
+                "component": "select, table, tree",
+                "type": "fix",
+                "description": "virtual scrollbars gain `cursor: pointer` and hover feedback (#58658, #58679)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "add the design system documentation ([#707](https://github.com/antdv-next/antdv-next/pull/707)) and refresh the getting-started guide"
+            },
+            {
+                "component": "docs",
+                "type": "feat",
+                "description": "support multi-file demo tabs in the code panel"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "add demos for Avatar `overflowInFinal`, reactive Form validation messages and Tabs `more.popupRender`; document the Image preview `wheel` prop"
+            },
+            {
+                "component": "sync",
+                "type": "chore",
+                "description": "sync ant-design **6.6.0** upstream changes ([#703](https://github.com/antdv-next/antdv-next/pull/703), [#710](https://github.com/antdv-next/antdv-next/pull/710))"
+            },
+            {
+                "component": "deps",
+                "type": "chore",
+                "description": "upgrade `@v-c/virtual-list@1.1.1`, `@v-c/tree@1.2.0`, `@v-c/select@1.2.1`, `@v-c/tree-select@1.1.2`, `@v-c/table@1.2.0`, `@v-c/image@1.1.0`"
+            },
+            {
+                "component": "",
+                "type": "refactor",
+                "description": "Button's delayed loading, Slider's tooltip toggle, Upload's progress reveal and Typography's copy feedback all move onto the shared `useDelayState` (#58690)"
+            }
+        ]
+    },
+    {
+        "version": "1.5.0",
+        "date": "2026-08-07",
+        "changelog": [
+            {
+                "component": "listy",
+                "type": "feat",
+                "description": "add the experimental Listy component with standard and virtual lists, grouped data and sticky headers, infinite-loading scenarios, semantic `classes` / `styles`, and a `scrollTo` API for scrolling to a position, item or group ([#670](https://github.com/antdv-next/antdv-next/pull/670))"
+            },
+            {
+                "component": "border-beam",
+                "type": "feat",
+                "description": "add `duration`, `lineWidth` and `size` to control animation duration, beam width and beam size respectively; add demos for these options and custom containers"
+            },
+            {
+                "component": "layout",
+                "type": "fix",
+                "description": "support both a `trigger` prop and slot on Layout Sider; restore the default trigger when neither is supplied, and allow an explicit `null` to hide it"
+            },
+            {
+                "component": "segmented",
+                "type": "fix",
+                "description": "in controlled mode, keep the selected item on the controlled value when the consumer does not update `value` after `change`, instead of incorrectly switching to the clicked item; upgrade the primitive to `@v-c/segmented@1.0.4`"
+            },
+            {
+                "component": "alert",
+                "type": "fix",
+                "description": "an object-valued `closable` now enables closing even when it does not provide `closeIcon`"
+            },
+            {
+                "component": "checkbox",
+                "type": "fix",
+                "description": "Checkbox Group ignores `null` / `undefined` options and options without a valid `value`, avoiding invalid checkbox items"
+            },
+            {
+                "component": "float-button",
+                "type": "fix",
+                "description": "BackTop jumps to the top without animation when the user enables `prefers-reduced-motion`; the shared `scrollTo` utility now also supports zero-duration scrolling and cancellation of unfinished animations"
+            },
+            {
+                "component": "app",
+                "type": "fix",
+                "description": "with CSS variables and `component={false}`, only warn when root classes or styles would actually be dropped (#58876)"
+            },
+            {
+                "component": "border-beam",
+                "type": "fix",
+                "description": "fall back to default border information when `getComputedStyle` throws on the host element, preventing BorderBeam from breaking the component tree"
+            },
+            {
+                "component": "types",
+                "type": "fix",
+                "description": "correct the DatePicker semantic return value and Tour `actionsRender` declarations to match the actual component-level APIs"
+            },
+            {
+                "component": "listy",
+                "type": "docs",
+                "description": "add Chinese and English component docs with demos for basic usage, virtual scrolling, grouping, imperative scrolling, rich content, infinite loading and semantic styling"
+            },
+            {
+                "component": "docs",
+                "type": "perf",
+                "description": "load component demo source only when the code panel is expanded, so the browser no longer parses every demo's source and highlighted output during page initialization; development HMR remains supported and loaded source is reused across collapse and re-expand"
+            },
+            {
+                "component": "sync",
+                "type": "chore",
+                "description": "sync upstream changes from ant-design **6.5.4**"
+            },
+            {
+                "component": "deps",
+                "type": "chore",
+                "description": "add `@v-c/listy@1.0.2` and upgrade `@v-c/picker` to 1.3.2 ([#684](https://github.com/antdv-next/antdv-next/pull/684)), `@v-c/segmented` to 1.0.4 and `@v-c/table` to 1.1.9"
+            }
+        ]
+    },
+    {
+        "version": "1.4.6",
+        "date": "2026-08-03",
+        "changelog": [
+            {
+                "component": "date-picker",
+                "type": "fix",
+                "description": "blur no longer submits an unconfirmed partial range when using `showTime` with `allowEmpty`. Comes from the RangePicker interaction-flow refactor in `@v-c/picker@1.3.0`, where every interaction is resolved into a single action before anything executes, so event sources no longer submit or reset values on their own ([#681](https://github.com/antdv-next/antdv-next/pull/681), #58803)"
+            },
+            {
+                "component": "slider",
+                "type": "fix",
+                "description": "`onFocus` / `onBlur` no longer fire more than once. Vue's `cloneVNode` merges `on*` props into an array and invokes each one — React's `cloneElement` overwrites — so an explicit dispatch on top of that duplicated the callback. The two paths are also asymmetric: `@v-c/slider`'s `Handle` declares `onFocus` as a prop but never `onBlur` ([#681](https://github.com/antdv-next/antdv-next/pull/681), #58711)"
+            },
+            {
+                "component": "table",
+                "type": "fix",
+                "description": "selecting all data no longer picks up disabled rows on other pages. It relied on `checkboxPropsMap`, which only covers the current page, so records elsewhere had no `disabled` entry and read as selectable ([#681](https://github.com/antdv-next/antdv-next/pull/681), #58843)"
+            },
+            {
+                "component": "table",
+                "type": "fix",
+                "description": "keep `dataIndex` accessible on the columns union ([#673](https://github.com/antdv-next/antdv-next/pull/673))"
+            },
+            {
+                "component": "transfer",
+                "type": "fix",
+                "description": "deselect-all is correct while filtering. It compared key counts, but filtering narrows the keys to the visible items, so a fully-checked list read as unchecked ([#681](https://github.com/antdv-next/antdv-next/pull/681), #58844)"
+            },
+            {
+                "component": "transfer",
+                "type": "fix",
+                "description": "preserve the disabled state of custom actions ([#668](https://github.com/antdv-next/antdv-next/pull/668), #58718)"
+            },
+            {
+                "component": "input",
+                "type": "fix",
+                "description": "`Input.OTP` no longer renders the original value when `mask` is a string — the mask overlay was effectively doing nothing — and an explicitly supplied `type` now wins over the mask-derived one ([#681](https://github.com/antdv-next/antdv-next/pull/681), #58805, #58835)"
+            },
+            {
+                "component": "input",
+                "type": "fix",
+                "description": "hide the `Input.TextArea` resize handle on touch devices ([#681](https://github.com/antdv-next/antdv-next/pull/681), #58812)"
+            },
+            {
+                "component": "select",
+                "type": "fix",
+                "description": "suffix icons and selected content no longer overlap the clear icon under custom theme colours ([#681](https://github.com/antdv-next/antdv-next/pull/681), #58581)"
+            },
+            {
+                "component": "select",
+                "type": "fix",
+                "description": "the clear button is reachable by keyboard — visible and outlined on focus, and a custom suffix holding focus is no longer hidden. The clear affordance is a focusable `<button>` now, and `pointer-events: none` does not take it out of the tab order ([#681](https://github.com/antdv-next/antdv-next/pull/681))"
+            },
+            {
+                "component": "auto-complete",
+                "type": "fix",
+                "description": "the disabled text colour now reaches the input — it has to be set through the CSS variable rather than `color`, which never reaches a customized input ([#681](https://github.com/antdv-next/antdv-next/pull/681), #58838)"
+            },
+            {
+                "component": "spin",
+                "type": "fix",
+                "description": "a standalone `Spin` nested inside another one is no longer pulled out of flow by the outer centring styles ([#681](https://github.com/antdv-next/antdv-next/pull/681), #58801)"
+            },
+            {
+                "component": "typography",
+                "type": "fix",
+                "description": "the editable textarea's font size now matches the content being edited ([#681](https://github.com/antdv-next/antdv-next/pull/681), #58551)"
+            },
+            {
+                "component": "upload",
+                "type": "fix",
+                "description": "default download links open with `noopener`, so newly opened tabs can no longer reach the opener page ([#681](https://github.com/antdv-next/antdv-next/pull/681), #58817)"
+            },
+            {
+                "component": "date-picker, select",
+                "type": "fix",
+                "description": "reset the browser's default button chrome on the clear icon. It is a `<button>` now, so without the reset its grey background, border, padding and own font showed through ([#681](https://github.com/antdv-next/antdv-next/pull/681), #58403)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "bare `<svg>` icons from third-party libraries now sit vertically centred with their labels in Tabs, Segmented, Breadcrumb, Collapse and Tag. An `<svg>` has no baseline of its own, so it is aligned by its bottom margin edge and rides above the text; `display: inline-block` additionally keeps it aligned under a reset that forces `svg { display: block }`, such as Tailwind Preflight ([#681](https://github.com/antdv-next/antdv-next/pull/681), #58847, #58862, #58868, #58869, #58870; Tag via [#668](https://github.com/antdv-next/antdv-next/pull/668), #58723)"
+            },
+            {
+                "component": "style",
+                "type": "fix",
+                "description": "complete the Icon base styles when `theme.zeroRuntime` or CSS layers are enabled ([#678](https://github.com/antdv-next/antdv-next/pull/678), #58763)"
+            },
+            {
+                "component": "style",
+                "type": "fix",
+                "description": "respect the `lineType` token in Button, ColorPicker, Select and Space borders ([#668](https://github.com/antdv-next/antdv-next/pull/668), #58755)"
+            },
+            {
+                "component": "tree",
+                "type": "fix",
+                "description": "respect the `margin-inline-start` design token in `showLine` ([#668](https://github.com/antdv-next/antdv-next/pull/668), #58745)"
+            },
+            {
+                "component": "table",
+                "type": "fix",
+                "description": "preserve the nested table's top border inside custom content ([#668](https://github.com/antdv-next/antdv-next/pull/668), #58746)"
+            },
+            {
+                "component": "faq",
+                "type": "docs",
+                "description": "note that in-DOM template lowercasing breaks camelCase slots on CDN ([#671](https://github.com/antdv-next/antdv-next/pull/671))"
+            },
+            {
+                "component": "docs",
+                "type": "feat",
+                "description": "supplement the Upload demo"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "add a Collapse panel-icon demo rendered through the `labelRender` slot, covering third-party bare `<svg>` icons ([#681](https://github.com/antdv-next/antdv-next/pull/681))"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "fix the English introduction and release blog links"
+            },
+            {
+                "component": "",
+                "type": "chore",
+                "description": "upgrade all twelve `@v-c/*` dependencies — util 1.1.0, trigger 1.1.0, tooltip 1.1.0, menu 1.3.0, dropdown 1.0.5, select 1.2.0, tabs 1.3.0, mentions 1.2.0, input-number 1.0.7, tree 1.1.3, pagination 1.1.0, picker 1.3.0 ([#681](https://github.com/antdv-next/antdv-next/pull/681))"
+            },
+            {
+                "component": "",
+                "type": "test",
+                "description": "regenerate snapshots in a UTC+8 timezone. Some had absorbed the generating machine's timezone and reported spurious failures elsewhere ([#681](https://github.com/antdv-next/antdv-next/pull/681))"
+            }
+        ]
+    },
+    {
+        "version": "1.4.5",
+        "date": "2026-07-21",
+        "changelog": [
+            {
+                "component": "build",
+                "type": "fix",
+                "description": "define `process.env.NODE_ENV` in the browser-facing bundles (`antd.js`, `antd.esm.js`, `antd-with-locales.js`, `antd-with-locales.esm.js`) so they no longer reference the missing `process` global. The bundler entry (`dist/index.js`) is left untouched so tree-shaking consumers keep their own dev/prod branches ([#667](https://github.com/antdv-next/antdv-next/pull/667), fixes [#666](https://github.com/antdv-next/antdv-next/issues/666))"
+            },
+            {
+                "component": "build",
+                "type": "fix",
+                "description": "expose `install` / `setPrefix` as named exports so the UMD/ESM global (`window.antd`) carries `install` at the top level; `app.use(window.antd)` now registers all components directly, without reaching for `window.antd.default` ([#667](https://github.com/antdv-next/antdv-next/pull/667))"
+            },
+            {
+                "component": "",
+                "type": "build",
+                "description": "add a post-build check that fails the build if any browser bundle references the `process` global unguarded, preventing this regression from shipping again ([#667](https://github.com/antdv-next/antdv-next/pull/667))"
+            }
+        ]
+    },
+    {
+        "version": "1.4.4",
+        "date": "2026-07-20",
+        "changelog": [
+            {
+                "component": "form",
+                "type": "fix",
+                "description": "`getFieldInstance(name)` now returns the rendered control instance instead of always returning `undefined`. The registry key no longer goes through `getFieldId`, so lookups work whether or not the Form declares a `name`, and `focusField` now prefers the control's own `focus()` before falling back to the DOM node ([#665](https://github.com/antdv-next/antdv-next/pull/665), fixes [#663](https://github.com/antdv-next/antdv-next/issues/663))"
+            },
+            {
+                "component": "timeline",
+                "type": "fix",
+                "description": "wire up the `dotRender` / `labelRender` / `contentRender` props and slots — they were declared and documented but ignored by `useItems`, and leaked into the Steps pass-through. Slot results are normalized so a conditional slot that renders nothing correctly falls back to the item's `icon` / `title` / `content` ([#656](https://github.com/antdv-next/antdv-next/pull/656), fixes [#653](https://github.com/antdv-next/antdv-next/issues/653))"
+            },
+            {
+                "component": "tabs",
+                "type": "fix",
+                "description": "`labelRender` / `contentRender` now infer their item type from `items` instead of hard-coding `TabItem`, and `InstanceType<typeof Tabs>` keeps the exposed `TabsRef` ([#661](https://github.com/antdv-next/antdv-next/pull/661), fixes [#660](https://github.com/antdv-next/antdv-next/issues/660))"
+            },
+            {
+                "component": "tree",
+                "type": "fix",
+                "description": "restore `rootStyle` compatibility — it was inherited from the underlying props but silently overwritten by the semantic root style, making it a no-op. It now works again and is deprecated in favour of `styles.root` (#58709)"
+            },
+            {
+                "component": "input",
+                "type": "fix",
+                "description": "a custom Search `enterButton` now syncs `disabled` with the form context, and a `loading` supplied on the custom Button is no longer overwritten (#58726)"
+            },
+            {
+                "component": "grid",
+                "type": "fix",
+                "description": "support zero `flex` values — `:flex=\"0\"` and responsive `:xs=\"{ flex: 0 }\"` were dropped by a truthiness check (#58719)"
+            },
+            {
+                "component": "tag",
+                "type": "fix",
+                "description": "closing a link tag no longer triggers navigation (#58720)"
+            },
+            {
+                "component": "splitter",
+                "type": "fix",
+                "description": "correct percentage-based ARIA value ranges (#58702)"
+            },
+            {
+                "component": "style",
+                "type": "fix",
+                "description": "respect the `lineWidth` / `lineType` border tokens in Typography, Tree, Collapse and Layout instead of hardcoding `1px solid`; the rendered CSS is unchanged at the default theme and only differs once those tokens are customized (#58740, #58741, #58742, #58743)"
+            },
+            {
+                "component": "segmented, radio",
+                "type": "fix",
+                "description": "drop downstream-only `prefers-reduced-motion` styles that upstream never had, restoring parity with the React sources ([#654](https://github.com/antdv-next/antdv-next/pull/654))"
+            },
+            {
+                "component": "wave",
+                "type": "fix",
+                "description": "avoid touching global `window` in the `attachListener` watch callback, which runs on Vue's async scheduler and could fire after the environment is torn down ([#662](https://github.com/antdv-next/antdv-next/pull/662))"
+            },
+            {
+                "component": "timeline",
+                "type": "docs",
+                "description": "add a `dotRender` demo ([#656](https://github.com/antdv-next/antdv-next/pull/656))"
+            },
+            {
+                "component": "input-number",
+                "type": "docs",
+                "description": "add a feedback suffix debug demo (#58703)"
+            },
+            {
+                "component": "anchor",
+                "type": "docs",
+                "description": "correct the `offsetTop` default value (#58710)"
+            },
+            {
+                "component": "select",
+                "type": "docs",
+                "description": "preserve the typed search text in the remote users demo (#58736)"
+            },
+            {
+                "component": "table",
+                "type": "docs",
+                "description": "fix the English API links ([#657](https://github.com/antdv-next/antdv-next/pull/657))"
+            },
+            {
+                "component": "build",
+                "type": "refactor",
+                "description": "`build:style` and `build:token-statistic` now load component sources through a vite SSR runner instead of importing `dist/components.js`, so a stale build can no longer produce outdated CSS or token statistics. Both outputs were verified identical to the dist-based runs ([#654](https://github.com/antdv-next/antdv-next/pull/654))"
+            }
+        ]
+    },
+    {
+        "version": "1.4.3",
+        "date": "2026-07-15",
+        "changelog": [
+            {
+                "component": "style",
+                "type": "fix",
+                "description": "add a flat `genNoMotionRawStyle` variant and use it at the six pseudo-element call sites in Switch / Segmented / Radio / Checkbox / BorderBeam, removing the invalid `::before::before` selectors and restoring `prefers-reduced-motion` behavior there ([#651](https://github.com/antdv-next/antdv-next/pull/651))"
+            },
+            {
+                "component": "",
+                "type": "ci",
+                "description": "bump node to 24 in GitHub Actions workflows"
+            },
+            {
+                "component": "",
+                "type": "chore",
+                "description": "regenerate the static style output"
+            }
+        ]
+    },
+    {
+        "version": "1.4.2",
+        "date": "2026-07-14",
+        "changelog": [
+            {
+                "component": "types",
+                "type": "feat",
+                "description": "export generic constructor types for Transfer / Cascader / TreeSelect / Segmented, enabling full generic inference in `h()` and TSX"
+            },
+            {
+                "component": "ecosystem",
+                "type": "feat",
+                "description": "add the antdv-next-tiptap rich-text editor to the Awesome page"
+            },
+            {
+                "component": "switch",
+                "type": "fix",
+                "description": "center label content with flex instead of aligning it to the text baseline, fixing the upward offset of icon content (#58672)"
+            },
+            {
+                "component": "switch, checkbox",
+                "type": "fix",
+                "description": "bare `checked` / `default-checked` template attributes now correctly resolve to `true` (previously parsed as an empty string and rendered unchecked)"
+            },
+            {
+                "component": "input",
+                "type": "fix",
+                "description": "prevent the Search button focus outline from being covered by adjacent elements (#58615)"
+            },
+            {
+                "component": "auto-complete",
+                "type": "fix",
+                "description": "avoid duplicate filled background on custom input components (#58669)"
+            },
+            {
+                "component": "motion",
+                "type": "fix",
+                "description": "`prefers-reduced-motion` now also disables transitions/animations on `::before` / `::after` pseudo elements (#58685)"
+            },
+            {
+                "component": "modal",
+                "type": "fix",
+                "description": "keep default slot rendering lazy while loading; apply `styles.body` of Modal methods to the content"
+            },
+            {
+                "component": "pagination",
+                "type": "fix",
+                "description": "keep the size changer width inside Form.Item"
+            },
+            {
+                "component": "button",
+                "type": "fix",
+                "description": "align icons inside Card extra"
+            },
+            {
+                "component": "descriptions",
+                "type": "fix",
+                "description": "restore view width in shrink-to-fit containers"
+            },
+            {
+                "component": "date-picker",
+                "type": "fix",
+                "description": "expose `nativeElement` as an element instead of a function"
+            },
+            {
+                "component": "config-provider",
+                "type": "fix",
+                "description": "component-level `classes` / `styles` config is no longer silently inferred as `any` ([#642](https://github.com/antdv-next/antdv-next/pull/642)); force `zeroRuntime` when the cssinjs layer is enabled"
+            },
+            {
+                "component": "locale",
+                "type": "fix",
+                "description": "complete missing locale fields"
+            },
+            {
+                "component": "types",
+                "type": "fix",
+                "description": "fix lost contextual callback types in `h()` usage, unresolvable `h(Table, props)`, and clean up remaining type errors in component sources"
+            },
+            {
+                "component": "deps",
+                "type": "fix",
+                "description": "bump `@v-c/util` to 1.0.21, fixing Select dropdown misalignment inside Space.Compact under vue 3.5.39"
+            },
+            {
+                "component": "",
+                "type": "build",
+                "description": "externalize `@vueuse/core` to silence rolldown build warnings"
+            },
+            {
+                "component": "layout",
+                "type": "docs",
+                "description": "add a \"Collapsible overlay\" demo (#58566)"
+            },
+            {
+                "component": "grid",
+                "type": "docs",
+                "description": "document the semantic difference between number and string values of Col `flex` (#58624)"
+            },
+            {
+                "component": "border-beam",
+                "type": "docs",
+                "description": "add a \"Show on hover\" demo (#58683)"
+            },
+            {
+                "component": "auto-complete",
+                "type": "docs",
+                "description": "add a filled custom input debug demo (#58669)"
+            },
+            {
+                "component": "table",
+                "type": "docs",
+                "description": "add an auto-height demo, a performance troubleshooting FAQ (Vue DevTools), `change` event typing examples, and more"
+            },
+            {
+                "component": "notification",
+                "type": "docs",
+                "description": "add a fixed-width usage FAQ"
+            },
+            {
+                "component": "site",
+                "type": "docs",
+                "description": "add an \"All\" filter to icon search; add Serene / Dashboard preview themes; align component overview card hover with ant-design"
+            },
+            {
+                "component": "deps",
+                "type": "chore",
+                "description": "bump `@v-c/table` ^1.1.8, `@v-c/virtual-list` ^1.1.0, `@v-c/mentions` ^1.1.2, `@v-c/util` ^1.0.21, `@antdv-next/happy-work-theme` 1.0.1"
+            }
+        ]
+    },
+    {
+        "version": "1.4.1",
+        "date": "2026-07-02",
+        "changelog": [
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix overlay components mis-positioning / losing the first-open animation under the vue 3.5.39 production build (Tooltip / Popover / Popconfirm / Dropdown) — via `@v-c/trigger` 1.0.18 (#623)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix **message / notification notices stacking** on top of each other under vue 3.5.39 (first-frame height measurement failed) — via `@v-c/notification` 2.0.2 (#623)"
+            },
+            {
+                "component": "masonry",
+                "type": "fix",
+                "description": "fix Masonry layout breakage caused by failed item height measurement under vue 3.5.39; resolve via `createElementRef` (#623)"
+            },
+            {
+                "component": "deps",
+                "type": "fix",
+                "description": "add `@v-c/notification` to overrides to drop the stale version left in the lockfile"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "add a component meta block (import / feedback / docs / version) to component doc pages, aligning with ant-design"
+            },
+            {
+                "component": "icon",
+                "type": "docs",
+                "description": "categorize the newly added AI / brand icons under the brand group, tag them as \"added in 1.4.0\", and surface them first"
+            },
+            {
+                "component": "drawer",
+                "type": "test",
+                "description": "add a regression test for Watermark inheritance inside Drawer (vue 3.5.39)"
+            },
+            {
+                "component": "deps",
+                "type": "chore",
+                "description": "bump vue to `^3.5.39`; `@v-c/trigger` 1.0.18, `@v-c/notification` 2.0.2, `@v-c/util` 1.0.20 and related toolchain deps"
+            }
+        ]
+    },
+    {
+        "version": "1.4.0",
+        "date": "2026-06-30",
+        "changelog": [
+            {
+                "component": "",
+                "type": "feat",
+                "description": "sync ant-design upstream changes (6.4.5 → 6.5.0) — [#621](https://github.com/antdv-next/antdv-next/pull/621)"
+            },
+            {
+                "component": "modal",
+                "type": "feat",
+                "description": "add `scrollLock` to control body scroll lock while open (#58256)"
+            },
+            {
+                "component": "dropdown",
+                "type": "feat",
+                "description": "support `left`/`right` placements (#58437)"
+            },
+            {
+                "component": "steps",
+                "type": "feat",
+                "description": "add `maxCount` collapse mode for dense step items (#57987)"
+            },
+            {
+                "component": "slider",
+                "type": "feat",
+                "description": "support disabling individual handles via `boolean[]` in Range mode (#57982)"
+            },
+            {
+                "component": "date-picker",
+                "type": "feat",
+                "description": "emit `clear` when the clear button is clicked (#58403)"
+            },
+            {
+                "component": "watermark",
+                "type": "feat",
+                "description": "`content` supports per-line font styles for multi-line watermarks (#57886)"
+            },
+            {
+                "component": "layout",
+                "type": "feat",
+                "description": "support semantic `classes`/`styles` (`root`/`body`) for Sider (#57938)"
+            },
+            {
+                "component": "tabs",
+                "type": "feat",
+                "description": "sync `body`/`content` semantic DOM rename and the `body` semantic (#58521)"
+            },
+            {
+                "component": "collapse",
+                "type": "feat",
+                "description": "support size padding tokens for header/content (#58436)"
+            },
+            {
+                "component": "badge",
+                "type": "feat",
+                "description": "allow removing the native title via `title` `null`/`false` (#58209)"
+            },
+            {
+                "component": "input",
+                "type": "feat",
+                "description": "support `tabIndex` for the Password visibility toggle (#58458)"
+            },
+            {
+                "component": "config-provider",
+                "type": "feat",
+                "description": "support Form `labelWrap` configuration (#58035)"
+            },
+            {
+                "component": "config-provider",
+                "type": "feat",
+                "description": "pass `theme.zeroRuntime` to the icon context (#58517)"
+            },
+            {
+                "component": "",
+                "type": "feat",
+                "description": "unify root semantic style priority across 30+ components (#58474)"
+            },
+            {
+                "component": "form",
+                "type": "fix",
+                "description": "restore `Form.Item` `help={false}` behavior (#58558)"
+            },
+            {
+                "component": "table",
+                "type": "fix",
+                "description": "honor `defaultSortOrder` on responsive columns (#58008)"
+            },
+            {
+                "component": "table",
+                "type": "fix",
+                "description": "keep the sticky header top border and drop the extra fixed-right line in bordered mode (#58451 #58516)"
+            },
+            {
+                "component": "table",
+                "type": "fix",
+                "description": "support forwarding aria attributes through `getCheckboxProps` (#58275)"
+            },
+            {
+                "component": "input,select",
+                "type": "fix",
+                "description": "add a focus outline for borderless inputs (#58250)"
+            },
+            {
+                "component": "input",
+                "type": "fix",
+                "description": "align the Search button height and the compact small control height (#58411 #58525)"
+            },
+            {
+                "component": "select",
+                "type": "fix",
+                "description": "refine single-mode open-state labelRender dimming; do not create disabled tags; numeric popup width (#58288 #58518 #58511)"
+            },
+            {
+                "component": "float-button",
+                "type": "fix",
+                "description": "prevent a disabled `FloatButton.Group` from opening the hover menu (#58513)"
+            },
+            {
+                "component": "alert",
+                "type": "fix",
+                "description": "fix the CSS specificity for icon vertical alignment with description (#57915)"
+            },
+            {
+                "component": "upload",
+                "type": "fix",
+                "description": "switch default file/picture icons from TwoTone to Outlined, aligning with upstream (#58497)"
+            },
+            {
+                "component": "config-provider",
+                "type": "fix",
+                "description": "forward collapse/otp/anchor/splitter component config"
+            },
+            {
+                "component": "layout",
+                "type": "fix",
+                "description": "pass the effective collapsed state to Sider semantic callbacks"
+            },
+            {
+                "component": "watermark",
+                "type": "fix",
+                "description": "keep the default 120×64 size for empty content to avoid a 0×0 draw error"
+            },
+            {
+                "component": "locale",
+                "type": "fix",
+                "description": "correct ja-JP Typography expand/collapse labels (#58563)"
+            },
+            {
+                "component": "menu",
+                "type": "test",
+                "description": "cover `itemData` in click/select/deselect callbacks (#58197)"
+            },
+            {
+                "component": "",
+                "type": "test",
+                "description": "add cross-component tests for root semantic style priority"
+            },
+            {
+                "component": "deps",
+                "type": "chore",
+                "description": "upgrade `@antdv-next/icons` to 1.1.1 (new icons + `zeroRuntime` support to skip runtime style injection)"
+            },
+            {
+                "component": "deps",
+                "type": "chore",
+                "description": "upgrade the `@v-c` chain — picker 1.2.0 / select 1.1.3 / tabs 1.2.1"
+            }
+        ]
+    },
+    {
+        "version": "1.3.7",
+        "date": "2026-06-25",
+        "changelog": [
+            {
+                "component": "",
+                "type": "fix",
+                "description": "sync ant-design upstream changes (6.4.4 → 6.4.5) — [#613](https://github.com/antdv-next/antdv-next/pull/613)"
+            },
+            {
+                "component": "tabs",
+                "type": "fix",
+                "description": "lazily mount panes via `@v-c/tabs` 1.1.1 — [#612](https://github.com/antdv-next/antdv-next/pull/612)"
+            },
+            {
+                "component": "pagination",
+                "type": "fix",
+                "description": "some scenarios did not trigger the update event"
+            },
+            {
+                "component": "table",
+                "type": "fix",
+                "description": "preserve the consumer's `components.header.table` when merging aria props"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "sync ant-design upstream fixes (#58234 #58214 #58314 #58371 #58339)"
+            },
+            {
+                "component": "locale",
+                "type": "docs",
+                "description": "fill missing nb_NO (Norwegian) keys (#58439)"
+            },
+            {
+                "component": "table",
+                "type": "refactor",
+                "description": "add a typed contract to HeaderTable"
+            },
+            {
+                "component": "",
+                "type": "test",
+                "description": "reduce spurious deprecation warnings in demos and tests"
+            },
+            {
+                "component": "",
+                "type": "test",
+                "description": "update snapshots"
+            },
+            {
+                "component": "deps",
+                "type": "chore",
+                "description": "upgrade the `@v-c` chain — table 1.1.6 (cell memo) + virtual-list 1.0.9 (height perf) — [#609](https://github.com/antdv-next/antdv-next/pull/609)"
+            },
+            {
+                "component": "",
+                "type": "chore",
+                "description": "upgrade dependencies"
+            }
+        ]
+    },
+    {
+        "version": "1.3.6",
+        "date": "2026-06-18",
+        "changelog": [
+            {
+                "component": "segmented",
+                "type": "fix",
+                "description": "no longer render an empty `.ant-segmented-item-icon` node for options without an `icon`, aligning with React ant-design (#600) — [#601](https://github.com/antdv-next/antdv-next/pull/601)"
+            },
+            {
+                "component": "dropdown",
+                "type": "fix",
+                "description": "forward `menu`'s `classes` / `styles` / `rootClass` to the overlay Menu instead of having them overridden by the explicit semantic classes (#599) — [#601](https://github.com/antdv-next/antdv-next/pull/601)"
+            },
+            {
+                "component": "input",
+                "type": "fix",
+                "description": "fix the duplicate `class` attribute"
+            },
+            {
+                "component": "form",
+                "type": "refactor",
+                "description": "relax the form-level `rules` type to a recursive `RulesMap` so nested (`{ user: { email: [...] } }`) and indexed (`{ list: { 0: [...] } }`) configs type-check without casts — [#601](https://github.com/antdv-next/antdv-next/pull/601)"
+            },
+            {
+                "component": "tree",
+                "type": "perf",
+                "description": "refine DirectoryTree typing"
+            },
+            {
+                "component": "",
+                "type": "test",
+                "description": "update Space and Transfer snapshots"
+            },
+            {
+                "component": "",
+                "type": "chore",
+                "description": "upgrade dependencies"
+            }
+        ]
+    },
+    {
+        "version": "1.3.5",
+        "date": "2026-06-13",
+        "changelog": [
+            {
+                "component": "form",
+                "type": "fix",
+                "description": "skip no-op meta updates to avoid re-rendering FormItem children (fixes DatePicker in-panel draft selection being reset inside a-form-item) — [#597](https://github.com/antdv-next/antdv-next/pull/597)"
+            },
+            {
+                "component": "deps",
+                "type": "chore",
+                "description": "bump `@v-c/picker` to ^1.1.3 for the companion fix where a parent re-render passing equivalent-but-new props reset the draft selection (antdv-next #597)"
+            },
+            {
+                "component": "",
+                "type": "chore",
+                "description": "update the docs-site css"
+            }
+        ]
+    },
+    {
+        "version": "1.3.4",
+        "date": "2026-06-12",
+        "changelog": [
+            {
+                "component": "form",
+                "type": "feat",
+                "description": "add `useForm` / `useFormInstance` hooks and align `validateFields` options with rc-field-form — [#586](https://github.com/antdv-next/antdv-next/pull/586)"
+            },
+            {
+                "component": "trigger",
+                "type": "fix",
+                "description": "fix popup misplacement when an ancestor has a transform, and bump `@v-c` deps (dialog@1.2.0 / menu@1.2.0 / pagination@1.0.1 / picker@1.1.2 / select@1.1.1 / table@1.1.4); select@1.1.1 fixes the Enter key mis-selecting the first option right as the dropdown opens (#594) — [#595](https://github.com/antdv-next/antdv-next/pull/595)"
+            },
+            {
+                "component": "slider",
+                "type": "fix",
+                "description": "prevent text selection on adjacent content when dragging the handle in Safari (antd #58024) — [#596](https://github.com/antdv-next/antdv-next/pull/596)"
+            },
+            {
+                "component": "splitter",
+                "type": "fix",
+                "description": "show the collapse bar when the collapse button is keyboard-focused and support keyboard collapsing (antd #58060) — [#596](https://github.com/antdv-next/antdv-next/pull/596)"
+            },
+            {
+                "component": "upload",
+                "type": "fix",
+                "description": "consume the global `progress` config from ConfigProvider and keep the default progress style when unset (antd #58126) — [#596](https://github.com/antdv-next/antdv-next/pull/596)"
+            },
+            {
+                "component": "notification",
+                "type": "fix",
+                "description": "skip rendering the title node when `title` is empty so the close button no longer overlaps the description (antd #58096) — [#596](https://github.com/antdv-next/antdv-next/pull/596)"
+            },
+            {
+                "component": "collapse",
+                "type": "fix",
+                "description": "align with antd v6 so `expandIconPlacement` takes effect — [#592](https://github.com/antdv-next/antdv-next/pull/592)"
+            },
+            {
+                "component": "modal",
+                "type": "fix",
+                "description": "bump `@v-c/dialog` to 1.1.1 to fix `forceRender` — [#582](https://github.com/antdv-next/antdv-next/pull/582)"
+            },
+            {
+                "component": "descriptions",
+                "type": "fix",
+                "description": "fix label styles not applied in non-bordered mode — [#580](https://github.com/antdv-next/antdv-next/pull/580)"
+            },
+            {
+                "component": "popconfirm",
+                "type": "fix",
+                "description": "fix the `confirm` prop value not rendering — [#577](https://github.com/antdv-next/antdv-next/pull/577)"
+            },
+            {
+                "component": "menu",
+                "type": "fix",
+                "description": "bump `@v-c/menu` to 1.1.3 to fix large-menu toggle jank, with regression tests — [#587](https://github.com/antdv-next/antdv-next/pull/587) / [#589](https://github.com/antdv-next/antdv-next/pull/589)"
+            },
+            {
+                "component": "menu",
+                "type": "fix",
+                "description": "keep the collapsed menu icon aligned before the collapse animation plays (antd #58271)"
+            },
+            {
+                "component": "radio",
+                "type": "fix",
+                "description": "fix vertical Radio.Group button radius and adjacent borders (antd #58317)"
+            },
+            {
+                "component": "tour",
+                "type": "fix",
+                "description": "keep the previous-button hover text readable in primary mode (antd #58311)"
+            },
+            {
+                "component": "auto-complete",
+                "type": "fix",
+                "description": "restrict the `showSearch` type to prevent unsupported Select props leaking (antd #58104)"
+            },
+            {
+                "component": "popover, popconfirm",
+                "type": "fix",
+                "description": "keep rendering when `title` or `content` is the number `0` (antd #58296)"
+            },
+            {
+                "component": "icon",
+                "type": "fix",
+                "description": "keep the spin animation working with multiple `iconPrefixCls` (antd #58253)"
+            },
+            {
+                "component": "locale",
+                "type": "fix",
+                "description": "align `en_GB` texts with `en_US` (antd #58224)"
+            },
+            {
+                "component": "calendar",
+                "type": "fix",
+                "description": "align lunar demo selected and panel month colors, and fix year selection"
+            },
+            {
+                "component": "docs",
+                "type": "fix",
+                "description": "hide debug demo anchors in production"
+            },
+            {
+                "component": "",
+                "type": "style",
+                "description": "deepen the `boxShadowTertiary` shadow for better visibility on light backgrounds, affecting Card / Tour / Segmented (antd #58205)"
+            },
+            {
+                "component": "",
+                "type": "test",
+                "description": "back-fill upstream companion tests for the Descriptions responsive `column` cascade, ColorPicker / Tag keyboard accessibility and Transfer root attribute passthrough (antd #58058 / #58040 / #58067 / #58166) — [#596](https://github.com/antdv-next/antdv-next/pull/596)"
+            },
+            {
+                "component": "tree-select",
+                "type": "test",
+                "description": "align focus tests with the `focusin` event semantics — [#595](https://github.com/antdv-next/antdv-next/pull/595)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "add a \"Global Config\" column to every component API table marking props configurable via the ConfigProvider component config, and simplify the ConfigProvider component-config section into a key list (antd #58265 / #58290 / #58278) — [#596](https://github.com/antdv-next/antdv-next/pull/596)"
+            },
+            {
+                "component": "form",
+                "type": "docs",
+                "description": "demonstrate nested name-path field entries in the `global-state` demo (antd #58327) — [#596](https://github.com/antdv-next/antdv-next/pull/596)"
+            },
+            {
+                "component": "date-picker",
+                "type": "docs",
+                "description": "switch the basic demo to Flex layout (antd #58320) — [#596](https://github.com/antdv-next/antdv-next/pull/596)"
+            },
+            {
+                "component": "progress",
+                "type": "docs",
+                "description": "fix grammar in the `steps` description (antd #58325) — [#596](https://github.com/antdv-next/antdv-next/pull/596)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "sync upstream doc and demo updates, and polish the docs-site page-turning navigation"
+            }
+        ]
+    },
+    {
+        "version": "1.3.3",
+        "date": "2026-06-03",
+        "changelog": [
+            {
+                "component": "docs",
+                "type": "feat",
+                "description": "hide debug demos in the production build and give debug demos a purple border — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            },
+            {
+                "component": "tooltip, popover",
+                "type": "fix",
+                "description": "use drop-shadow for the arrow so it no longer stacks with the container shadow (antd #57988) — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            },
+            {
+                "component": "checkbox",
+                "type": "fix",
+                "description": "avoid lingering hover border style on touch devices (antd #58085) — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            },
+            {
+                "component": "modal",
+                "type": "fix",
+                "description": "correct footer button alignment when `confirmLoading` is true (antd #58120) — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            },
+            {
+                "component": "result, popconfirm",
+                "type": "fix",
+                "description": "correct status icon color inheritance (antd #58157) — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            },
+            {
+                "component": "select",
+                "type": "fix",
+                "description": "keep selected option active style themed and avoid disabled customize input background stacking (antd #58069 / #58114) — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            },
+            {
+                "component": "date-picker, time-picker",
+                "type": "fix",
+                "description": "make the clear button keyboard accessible (antd #58132) — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            },
+            {
+                "component": "empty",
+                "type": "fix",
+                "description": "use design tokens for SVG colors to support dark mode (antd #58152) — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            },
+            {
+                "component": "tree",
+                "type": "fix",
+                "description": "default `DirectoryTree` `defaultExpandParent` to `true` (antd #58068) — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            },
+            {
+                "component": "table",
+                "type": "fix",
+                "description": "add `presentation` role to the filter dropdown wrapper (antd #58164) — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            },
+            {
+                "component": "descriptions",
+                "type": "fix",
+                "description": "avoid inflated width inside a `max-content` ancestor (antd #58203) — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            },
+            {
+                "component": "tabs",
+                "type": "fix",
+                "description": "correct the more-dropdown motion direction when the placement flips (antd #58202) — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            },
+            {
+                "component": "form",
+                "type": "fix",
+                "description": "treat `help={false}` as no help (antd #58160) — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            },
+            {
+                "component": "menu",
+                "type": "fix",
+                "description": "do not leak the `itemData` prop to the DOM element — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            },
+            {
+                "component": "locale",
+                "type": "fix",
+                "description": "add Tour translations to `km_KH` and QRCode / ColorPicker translations to `pt_BR` (antd #58140 / #58188) — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            },
+            {
+                "component": "transfer",
+                "type": "perf",
+                "description": "combine enabled key iteration (antd #58168) — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "register existing debug demos, sync the Table / AutoComplete demos (antd #58134 / #58114) — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            },
+            {
+                "component": "rate",
+                "type": "docs",
+                "description": "drop native `className` / `style` rows from the API table (antd #58196) — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "align `CLAUDE.md` with `AGENTS.md` to keep repo guidance consistent — [#567](https://github.com/antdv-next/antdv-next/pull/567)"
+            },
+            {
+                "component": "deps",
+                "type": "build",
+                "description": "bump `@v-c` trigger / menu / virtual-list to their released sync versions — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            },
+            {
+                "component": "radio",
+                "type": "test",
+                "description": "cover uncontrolled checked state (antd #57917) — [#568](https://github.com/antdv-next/antdv-next/pull/568)"
+            }
+        ]
+    },
+    {
+        "version": "1.3.2",
+        "date": "2026-06-03",
+        "changelog": [
+            {
+                "component": "time-picker",
+                "type": "fix",
+                "description": "console error when clearing values — [#562](https://github.com/antdv-next/antdv-next/pull/562)"
+            },
+            {
+                "component": "date-picker",
+                "type": "fix",
+                "description": "the `inputReadonly` property passed is invalid — [#561](https://github.com/antdv-next/antdv-next/pull/561)"
+            },
+            {
+                "component": "pagination",
+                "type": "fix",
+                "description": "text line break overflow in some scenarios — [#557](https://github.com/antdv-next/antdv-next/pull/557)"
+            },
+            {
+                "component": "switch",
+                "type": "fix",
+                "description": "emit the `click` event from the Switch component — [#556](https://github.com/antdv-next/antdv-next/pull/556)"
+            },
+            {
+                "component": "tour",
+                "type": "fix",
+                "description": "exclude `children` from the button props spread to avoid a Vue DOM warning — [#555](https://github.com/antdv-next/antdv-next/pull/555)"
+            },
+            {
+                "component": "upload",
+                "type": "fix",
+                "description": "partial slots of `UploadDragger` are not properly transmitted through — [#553](https://github.com/antdv-next/antdv-next/pull/553)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "sync ant-design master accessibility and responsive fixes — [#549](https://github.com/antdv-next/antdv-next/pull/549)"
+            },
+            {
+                "component": "modal",
+                "type": "fix",
+                "description": "support global config locale — [#546](https://github.com/antdv-next/antdv-next/pull/546)"
+            },
+            {
+                "component": "image",
+                "type": "docs",
+                "description": "supplement `focusTrap` — [#565](https://github.com/antdv-next/antdv-next/pull/565)"
+            },
+            {
+                "component": "carousel",
+                "type": "docs",
+                "description": "remove the missing component token demo — [#564](https://github.com/antdv-next/antdv-next/pull/564)"
+            },
+            {
+                "component": "tabs",
+                "type": "docs",
+                "description": "replace `children` with `content` — [#559](https://github.com/antdv-next/antdv-next/pull/559)"
+            },
+            {
+                "component": "readme",
+                "type": "docs",
+                "description": "improve contribution steps — [#551](https://github.com/antdv-next/antdv-next/pull/551)"
+            },
+            {
+                "component": "deps",
+                "type": "chore",
+                "description": "update `@v-c/table` to 1.1.3 — [#550](https://github.com/antdv-next/antdv-next/pull/550)"
+            },
+            {
+                "component": "deps",
+                "type": "chore",
+                "description": "update `@v-c/table` to 1.1.2 — [#548](https://github.com/antdv-next/antdv-next/pull/548)"
+            }
+        ]
+    },
+    {
+        "version": "1.3.1",
+        "date": "2026-05-20",
+        "changelog": [
+            {
+                "component": "",
+                "type": "fix",
+                "description": "sync ant-design 6.4.3 P1 fixes (Result / DatePicker / Select) — [#541](https://github.com/antdv-next/antdv-next/pull/541)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix image warning — [#539](https://github.com/antdv-next/antdv-next/pull/539)"
+            },
+            {
+                "component": "table",
+                "type": "perf",
+                "description": "sync ant-design 6.4.3 Table perf and `FilterResetProps` rename — [#542](https://github.com/antdv-next/antdv-next/pull/542)"
+            },
+            {
+                "component": "mentions",
+                "type": "perf",
+                "description": "sync ant-design 6.4.3 `getMentions` reduce iteration — [#543](https://github.com/antdv-next/antdv-next/pull/543)"
+            },
+            {
+                "component": "Table",
+                "type": "test",
+                "description": "add a test case for the `table-demo-expand-sticky` table component — [#540](https://github.com/antdv-next/antdv-next/pull/540)"
+            }
+        ]
+    },
+    {
+        "version": "1.3.0",
+        "date": "2026-05-16",
+        "changelog": [
+            {
+                "component": "",
+                "type": "feat",
+                "description": "sync ant-design@6.4.2, covering Calendar / Splitter / Image / Wave / Modal / Drawer / ConfigProvider / Table / Tabs / Form / Menu / Tag / Tree / Tour / Typography / Notification / Message"
+            },
+            {
+                "component": "border-beam",
+                "type": "feat",
+                "description": "introduce the BorderBeam glow border component with docs, demos, and unit tests"
+            },
+            {
+                "component": "typography",
+                "type": "feat",
+                "description": "migrate to antd 6.4 v2 semantic structure; add `actions.placement` for action button group position; new `root` / `actions` / `action` / `textarea` semantic keys"
+            },
+            {
+                "component": "notification",
+                "type": "feat",
+                "description": "upgrade to vc-notification@2 with full v2 semantic slots `title` / `description` / `icon` / `actions` / `progress` / `close`; add `_InternalListDoNotUseOrYouWillBeFired` internal component for doc previews"
+            },
+            {
+                "component": "message",
+                "type": "feat",
+                "description": "sync antd 6.4 v2 semantic structure (`title` / `wrapper` / `list` / `listContent`); add `_InternalListDoNotUseOrYouWillBeFired`"
+            },
+            {
+                "component": "form",
+                "type": "feat",
+                "description": "add `help` / `helpItem` / `extra` semantic class and style support"
+            },
+            {
+                "component": "transfer",
+                "type": "feat",
+                "description": "add nested `source` / `target` semantic overrides — customize `section` / `header` / `title` / `body` / `list` / `item` / `itemIcon` / `itemContent` / `footer` per side"
+            },
+            {
+                "component": "calendar",
+                "type": "feat",
+                "description": "add `itemContent` semantic class and style"
+            },
+            {
+                "component": "modal, tour, tag, popconfirm, image, statistic, tree, tree-select, input, popconfirm",
+                "type": "feat",
+                "description": "add `close` / `icon` / `clear` / `value` / `itemSwitcher` semantic class/style support"
+            },
+            {
+                "component": "config-provider",
+                "type": "feat",
+                "description": "extend global component config for Select `allowClear` / `showSearch` / `loadingIcon`, DatePicker / TimePicker `allowClear` / `clearIcon`, Modal infoIcon/successIcon/warningIcon/errorIcon, Upload `progress` / `accept`, Modal / Drawer `focusable`, Mentions `allowClear`, Cascader icons, and more"
+            },
+            {
+                "component": "menu",
+                "type": "feat",
+                "description": "refresh item extra layout and tooltip padding"
+            },
+            {
+                "component": "mentions",
+                "type": "feat",
+                "description": "wire the popup z-index through `useZIndex`"
+            },
+            {
+                "component": "cascader",
+                "type": "feat",
+                "description": "support ConfigProvider `searchIcon` / `clearIcon` / `removeIcon` / `suffixIcon`"
+            },
+            {
+                "component": "table",
+                "type": "feat",
+                "description": "support ConfigProvider column defaults with per-column merge"
+            },
+            {
+                "component": "",
+                "type": "feat",
+                "description": "upgrade vc-notification@2.0.0-rc.4, vc-input@1.1.0-rc.3, vc-picker@1.1.0-rc.3, vc-table@1.1.0-rc.2, vc-select@1.1.0-rc.1, vc-slider@1.1.0-rc.1, vc-resize-observer@1.1.0-rc.1, vc-tour@1.1.0-rc.2 etc."
+            },
+            {
+                "component": "pkg",
+                "type": "fix",
+                "description": "add `index.d.ts` fallback to the `./dist/*` subpath exports — resolves TypeScript `moduleResolution: bundler` / `nodenext` failing to resolve deep type imports"
+            },
+            {
+                "component": "message",
+                "type": "fix",
+                "description": "switch the transition class from `move-up` to `fade`, restoring antd 6.x enter/leave animation"
+            },
+            {
+                "component": "message",
+                "type": "fix",
+                "description": "promote the icon from inline description into the v2 icon semantic slot"
+            },
+            {
+                "component": "notification",
+                "type": "fix",
+                "description": "pad description with `padding-inline-end` when the notice is closable but has no title — prevents the close button from overlapping description text"
+            },
+            {
+                "component": "notification",
+                "type": "fix",
+                "description": "position via `--notification-top` / `--notification-bottom` CSS variables to stop the holder from spanning full height"
+            },
+            {
+                "component": "notification, message",
+                "type": "fix",
+                "description": "re-add the v1 icon-wrapper class for backward compatibility"
+            },
+            {
+                "component": "notification",
+                "type": "fix",
+                "description": "in vc-notification, drop the broken onClose array merge and the invalid TransitionGroup tag (vc-notification 2.0.0-rc.2/rc.3 follow-ups)"
+            },
+            {
+                "component": "border-beam",
+                "type": "fix",
+                "description": "adjust the `offsetPath` corner radius from `200px` to `100px` so the beam no longer breaks at corners"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "add Notification / Message / Typography / Form / Transfer / Tag / Tour / Modal / Image / Calendar / Statistic / Tree / TreeSelect / Input / Popconfirm semantic DOM preview demos with bilingual locale copy"
+            },
+            {
+                "component": "notification, message",
+                "type": "docs",
+                "description": "refactor the style-class demo to match React 6.4's green/red function-style example"
+            },
+            {
+                "component": "border-beam",
+                "type": "docs",
+                "description": "add zh-CN / en-US component docs, demos, and sidebar registration"
+            }
+        ]
+    },
+    {
+        "version": "1.2.2",
+        "date": "2026-04-28",
+        "changelog": [
+            {
+                "component": "",
+                "type": "feat",
+                "description": "add previous and next page turning by @selicens in [#491](https://github.com/antdv-next/antdv-next/pull/491)"
+            },
+            {
+                "component": "",
+                "type": "feat",
+                "description": "support Table generic mode by @aibayanyu20 in [#496](https://github.com/antdv-next/antdv-next/pull/496)"
+            },
+            {
+                "component": "",
+                "type": "feat",
+                "description": "sync antd by @aibayanyu20 in [#505](https://github.com/antdv-next/antdv-next/pull/505)"
+            },
+            {
+                "component": "",
+                "type": "feat",
+                "description": "sync antd@6.3.7 by @aibayanyu20 in [#507](https://github.com/antdv-next/antdv-next/pull/507)"
+            },
+            {
+                "component": "masonry",
+                "type": "fix",
+                "description": "add generic type support for the `itemRender` slot data field by @ayangweb in [#490](https://github.com/antdv-next/antdv-next/pull/490)"
+            },
+            {
+                "component": "card",
+                "type": "fix",
+                "description": "skip the empty body wrapper when there is no content by @ayangweb in [#493](https://github.com/antdv-next/antdv-next/pull/493)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Button motion by @aibayanyu20 in [#495](https://github.com/antdv-next/antdv-next/pull/495)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Form using the origin name incorrectly by @aibayanyu20 in [#498](https://github.com/antdv-next/antdv-next/pull/498)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Table header scroll not taking effect in virtual mode by @aibayanyu20 in [#499](https://github.com/antdv-next/antdv-next/pull/499)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Form auto-complete not taking effect by @aibayanyu20 in [#504](https://github.com/antdv-next/antdv-next/pull/504)"
+            },
+            {
+                "component": "menu",
+                "type": "docs",
+                "description": "optimize the sidebar to support opening links in a new tab by @cc-hearts in [#485](https://github.com/antdv-next/antdv-next/pull/485)"
+            },
+            {
+                "component": "descriptions",
+                "type": "docs",
+                "description": "update the Descriptions component documentation by @jiangrong-devops in [#501](https://github.com/antdv-next/antdv-next/pull/501)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "fix unexpected sorting when adjusting column width by @think-gem in [#502](https://github.com/antdv-next/antdv-next/pull/502)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "sync docs by @aibayanyu20 in [#506](https://github.com/antdv-next/antdv-next/pull/506)"
+            }
+        ]
+    },
+    {
+        "version": "1.2.1",
+        "date": "2026-04-20",
+        "changelog": [
+            {
+                "component": "drawer",
+                "type": "fix",
+                "description": "fix `afterOpenChange` being triggered twice during initial mount by @selicens in [#466](https://github.com/antdv-next/antdv-next/pull/466)"
+            },
+            {
+                "component": "Transfer",
+                "type": "fix",
+                "description": "fix the Transfer default slot rendering empty content when used on a node without a specified `direction` by @jiangrong-devops in [#471](https://github.com/antdv-next/antdv-next/pull/471)"
+            },
+            {
+                "component": "drawer",
+                "type": "fix",
+                "description": "preserve Esc-to-close behavior when `getContainer` is `false` by @ffgenius in [#470](https://github.com/antdv-next/antdv-next/pull/470)"
+            },
+            {
+                "component": "affix",
+                "type": "fix",
+                "description": "use content height for the placeholder to fix incorrect placeholder sizing by @william-xue in [#478](https://github.com/antdv-next/antdv-next/pull/478)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix layer-mode icon colors not taking effect and static methods not supporting locale by @aibayanyu20 in [#481](https://github.com/antdv-next/antdv-next/pull/481)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "optimize the docs site by @selicens in [#467](https://github.com/antdv-next/antdv-next/pull/467)"
+            },
+            {
+                "component": "Transfer",
+                "type": "docs",
+                "description": "sync the antd Transfer component example docs by @jiangrong-devops in [#476](https://github.com/antdv-next/antdv-next/pull/476)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "update the `migration-antdv-next` docs by @think-gem in [#474](https://github.com/antdv-next/antdv-next/pull/474)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "revert the migration docs update by @selicens in [#480](https://github.com/antdv-next/antdv-next/pull/480)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "add related links by @aibayanyu20 in [#486](https://github.com/antdv-next/antdv-next/pull/486)"
+            },
+            {
+                "component": "image",
+                "type": "test",
+                "description": "update snapshots for the `alt` attribute fix by @cc-hearts in [#479](https://github.com/antdv-next/antdv-next/pull/479)"
+            }
+        ]
+    },
+    {
+        "version": "1.2.0",
+        "date": "2026-04-15",
+        "changelog": [
+            {
+                "component": "select",
+                "type": "feat",
+                "description": "expose `blur`, `focus`, and `scrollTo` methods by @selicens in [#448](https://github.com/antdv-next/antdv-next/pull/448)"
+            },
+            {
+                "component": "",
+                "type": "feat",
+                "description": "sync antd by @aibayanyu20 in [#460](https://github.com/antdv-next/antdv-next/pull/460)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Breadcrumb slot typing by @aibayanyu20 in [#447](https://github.com/antdv-next/antdv-next/pull/447)"
+            },
+            {
+                "component": "space",
+                "type": "fix",
+                "description": "prevent `Space.Addon` content from wrapping by @selicens in [#452](https://github.com/antdv-next/antdv-next/pull/452)"
+            },
+            {
+                "component": "Tree",
+                "type": "fix",
+                "description": "fix checkbox alignment when the parent node content spans multiple lines in Tree by @jiangrong-devops in [#431](https://github.com/antdv-next/antdv-next/pull/431)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Upload link navigation and update dependencies by @aibayanyu20 in [#453](https://github.com/antdv-next/antdv-next/pull/453)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Select `getPopupContainer` from ConfigProvider not taking effect by @aibayanyu20 in [#456](https://github.com/antdv-next/antdv-next/pull/456)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix ConfigProvider extended props not taking effect by @aibayanyu20 in [#459](https://github.com/antdv-next/antdv-next/pull/459)"
+            },
+            {
+                "component": "docs",
+                "type": "perf",
+                "description": "improve the LLMs docs generation workflow path by @cc-hearts in [#444](https://github.com/antdv-next/antdv-next/pull/444)"
+            },
+            {
+                "component": "spin",
+                "type": "docs",
+                "description": "add Description API and migration docs by @selicens in [#449](https://github.com/antdv-next/antdv-next/pull/449)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix icon and message display copy in docs by @cc-hearts in [#454](https://github.com/antdv-next/antdv-next/pull/454)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "correct a zh-CN typo in the Timeline docs by @jasonren0403 in [#457](https://github.com/antdv-next/antdv-next/pull/457)"
+            },
+            {
+                "component": "image",
+                "type": "chore",
+                "description": "update image source paths by @selicens in [#445](https://github.com/antdv-next/antdv-next/pull/445)"
+            }
+        ]
+    },
+    {
+        "version": "1.1.9",
+        "date": null,
+        "changelog": [
+            {
+                "component": "tabs",
+                "type": "fix",
+                "description": "fix duplicated class names by @selicens in [#435](https://github.com/antdv-next/antdv-next/pull/435)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix missing Menu styles in SSR rendering mode by @aibayanyu20 in [#437](https://github.com/antdv-next/antdv-next/pull/437)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix FormItem label not taking effect by @aibayanyu20 in [#441](https://github.com/antdv-next/antdv-next/pull/441)"
+            },
+            {
+                "component": "image",
+                "type": "chore",
+                "description": "update image source paths by @selicens in [#436](https://github.com/antdv-next/antdv-next/pull/436)"
+            },
+            {
+                "component": "",
+                "type": "perf",
+                "description": "optimize type performance by @aibayanyu20 in [#442](https://github.com/antdv-next/antdv-next/pull/442)"
+            }
+        ]
+    },
+    {
+        "version": "1.1.8",
+        "date": null,
+        "changelog": [
+            {
+                "component": "",
+                "type": "feat",
+                "description": "initialize the Pro project by @aibayanyu20 in [#422](https://github.com/antdv-next/antdv-next/pull/422)"
+            },
+            {
+                "component": "input",
+                "type": "fix",
+                "description": "add an IME composition guard for Input and support the `changeOnComposing` prop by @shiqkuangsan in [#417](https://github.com/antdv-next/antdv-next/pull/417)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix `style` and `class` passthrough in ConfigProvider by @aibayanyu20 in [#420](https://github.com/antdv-next/antdv-next/pull/420)"
+            },
+            {
+                "component": "image",
+                "type": "fix",
+                "description": "fix abnormal button styles in the image preview footer by @selicens in [#430](https://github.com/antdv-next/antdv-next/pull/430)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix TimePicker columns not scrolling on touch devices by @aibayanyu20 in [#433](https://github.com/antdv-next/antdv-next/pull/433)"
+            },
+            {
+                "component": "tabs",
+                "type": "docs",
+                "description": "update the draggable Tabs documentation example by @jiangrong-devops in [#412](https://github.com/antdv-next/antdv-next/pull/412)"
+            },
+            {
+                "component": "blog",
+                "type": "docs",
+                "description": "optimize the release announcement content and English translation by @TAYUN in [#413](https://github.com/antdv-next/antdv-next/pull/413)"
+            },
+            {
+                "component": "docs",
+                "type": "fix",
+                "description": "correct the GitHub edit path in the documentation by @lonewolfyx in [#415](https://github.com/antdv-next/antdv-next/pull/415)"
+            },
+            {
+                "component": "docs",
+                "type": "fix",
+                "description": "fix left alignment in the documentation layout by @ouyang108 in [#425](https://github.com/antdv-next/antdv-next/pull/425)"
+            },
+            {
+                "component": "docs",
+                "type": "fix",
+                "description": "align dark theme tokens and background styles for the docs sider menu by @ffgenius in [#428](https://github.com/antdv-next/antdv-next/pull/428)"
+            },
+            {
+                "component": "",
+                "type": "chore",
+                "description": "update dependencies by @aibayanyu20 in [#416](https://github.com/antdv-next/antdv-next/pull/416)"
+            },
+            {
+                "component": "",
+                "type": "chore",
+                "description": "add `CLAUDE.md` for Claude Code collaboration guidance by @shiqkuangsan in [#418](https://github.com/antdv-next/antdv-next/pull/418)"
+            },
+            {
+                "component": "",
+                "type": "ci",
+                "description": "add Claude Code workflows by @shiqkuangsan in [#419](https://github.com/antdv-next/antdv-next/pull/419)"
+            }
+        ]
+    },
+    {
+        "version": "1.1.7",
+        "date": null,
+        "changelog": [
+            {
+                "component": "cssinjs",
+                "type": "fix",
+                "description": "fix cssinjs render delay and sync related cssinjs implementation by @aibayanyu20 in [#403](https://github.com/antdv-next/antdv-next/pull/403)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix invalid i18n for icon category titles by @selicens in [#404](https://github.com/antdv-next/antdv-next/pull/404)"
+            },
+            {
+                "component": "popconfirm",
+                "type": "fix",
+                "description": "fix invalid padding in the `style-class` demo container by @selicens in [#405](https://github.com/antdv-next/antdv-next/pull/405)"
+            },
+            {
+                "component": "Tree",
+                "type": "fix",
+                "description": "sync antd 6.3.4 and correct the custom `switcherIcon` class when `showLine` is enabled by @selicens in [#407](https://github.com/antdv-next/antdv-next/pull/407)"
+            },
+            {
+                "component": "transfer",
+                "type": "fix",
+                "description": "sync antd 6.3.4 and handle non-string `render` results when rendering items by @selicens in [#408](https://github.com/antdv-next/antdv-next/pull/408)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "sync antd 6.3.4 and apply custom hover color to SubMenu parent items by @selicens in [#409](https://github.com/antdv-next/antdv-next/pull/409)"
+            },
+            {
+                "component": "image",
+                "type": "fix",
+                "description": "sync antd 6.3.4 and support `fetchPriority` prop passthrough by @selicens in [#410](https://github.com/antdv-next/antdv-next/pull/410)"
+            },
+            {
+                "component": "table",
+                "type": "fix",
+                "description": "fix controlled Popover in column titles being rendered twice when scroll is enabled by @aibayanyu20 in [#411](https://github.com/antdv-next/antdv-next/pull/411)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "update key descriptions from React to Vue and add column key notes by @jiangrong-devops in [#399](https://github.com/antdv-next/antdv-next/pull/399)"
+            },
+            {
+                "component": "docs",
+                "type": "feat",
+                "description": "add mobile responsive adaptation for the docs site by @william-xue in [#400](https://github.com/antdv-next/antdv-next/pull/400)"
+            },
+            {
+                "component": "icon",
+                "type": "docs",
+                "description": "scroll to the icon list after searching by @z-kunf in [#401](https://github.com/antdv-next/antdv-next/pull/401)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "update the documentation repository URL by @ayangweb in [#406](https://github.com/antdv-next/antdv-next/pull/406)"
+            }
+        ]
+    },
+    {
+        "version": "1.1.6",
+        "date": null,
+        "changelog": [
+            {
+                "component": "sponsor",
+                "type": "feat",
+                "description": "add darkingtail payment QR codes with dark-theme presentation by @darkingtail in [#395](https://github.com/antdv-next/antdv-next/pull/395)"
+            },
+            {
+                "component": "preview-theme",
+                "type": "feat",
+                "description": "use `antdv-style` for theme preview and support copying theme code by @ffgenius in [#397](https://github.com/antdv-next/antdv-next/pull/397)"
+            },
+            {
+                "component": "menu",
+                "type": "fix",
+                "description": "align collapsed icons when using custom `collapsedIconSize` by @wxfengg in [#385](https://github.com/antdv-next/antdv-next/pull/385)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix focus trap by @aibayanyu20 in [#389](https://github.com/antdv-next/antdv-next/pull/389)"
+            },
+            {
+                "component": "divider",
+                "type": "fix",
+                "description": "fix `class` attrs not being applied correctly when passed through attrs by @cc-hearts in [#394](https://github.com/antdv-next/antdv-next/pull/394)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix initial Menu highlight state by @aibayanyu20 in [#396](https://github.com/antdv-next/antdv-next/pull/396)"
+            },
+            {
+                "component": "image",
+                "type": "fix",
+                "description": "fix mask blur behavior when `mask` is `true` by @448847482 in [#398](https://github.com/antdv-next/antdv-next/pull/398)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "fix missing Modal documentation parameters by @jauqasx in [#388](https://github.com/antdv-next/antdv-next/pull/388)"
+            },
+            {
+                "component": "docs",
+                "type": "fix",
+                "description": "refine theme picker contrast logic for dark mode by @wxfengg in [#392](https://github.com/antdv-next/antdv-next/pull/392)"
+            }
+        ]
+    },
+    {
+        "version": "1.1.5",
+        "date": null,
+        "changelog": [
+            {
+                "component": "playground",
+                "type": "feat",
+                "description": "add `VC_LOCAL` mode for local `@v-c/*` package debugging by @shiqkuangsan in [#371](https://github.com/antdv-next/antdv-next/pull/371)"
+            },
+            {
+                "component": "",
+                "type": "feat",
+                "description": "add WeChat official account QR code by @selicens in [#380](https://github.com/antdv-next/antdv-next/pull/380)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Select render error by @aibayanyu20 in [#370](https://github.com/antdv-next/antdv-next/pull/370)"
+            },
+            {
+                "component": "style",
+                "type": "fix",
+                "description": "improve Link `focus-visible` outline for accessibility by @darkingtail in [#376](https://github.com/antdv-next/antdv-next/pull/376)"
+            },
+            {
+                "component": "grid",
+                "type": "fix",
+                "description": "add `xxxl` breakpoint to media size mapping by @darkingtail in [#378](https://github.com/antdv-next/antdv-next/pull/378)"
+            },
+            {
+                "component": "form",
+                "type": "fix",
+                "description": "remove hardcoded SimSun font from required mark by @darkingtail in [#377](https://github.com/antdv-next/antdv-next/pull/377)"
+            },
+            {
+                "component": "image",
+                "type": "fix",
+                "description": "improve preview mask blur transition and movable cursor styles by @darkingtail in [#375](https://github.com/antdv-next/antdv-next/pull/375)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix duplicate Layout class application by @aibayanyu20 in [#379](https://github.com/antdv-next/antdv-next/pull/379)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix dynamic placeholder by @Rascal-Coder in [#383](https://github.com/antdv-next/antdv-next/pull/383)"
+            },
+            {
+                "component": "table",
+                "type": "docs",
+                "description": "document Table props performance notes by @cc-hearts in [#373](https://github.com/antdv-next/antdv-next/pull/373)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "sync and fix index page descriptions (zh-CN & en-US) by @jauqasx in [#374](https://github.com/antdv-next/antdv-next/pull/374)"
+            }
+        ]
+    },
+    {
+        "version": "1.1.4",
+        "date": null,
+        "changelog": [
+            {
+                "component": "editor",
+                "type": "feat",
+                "description": "use antd theme editor by @ffgenius in [#365](https://github.com/antdv-next/antdv-next/pull/365)"
+            },
+            {
+                "component": "",
+                "type": "feat",
+                "description": "add SFC usage for Menu and Collapse by @aibayanyu20 in [#366](https://github.com/antdv-next/antdv-next/pull/366)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix TreeSelect hover style by @aibayanyu20 in [#362](https://github.com/antdv-next/antdv-next/pull/362)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Input.Search triggering the clear event twice by @aibayanyu20 in [#361](https://github.com/antdv-next/antdv-next/pull/361)"
+            },
+            {
+                "component": "input",
+                "type": "docs",
+                "description": "supplement `clearIcon` slot docs by @selicens in [#355](https://github.com/antdv-next/antdv-next/pull/355)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "fix compatibility notes for lower Chrome versions by @aibayanyu20 in [#357](https://github.com/antdv-next/antdv-next/pull/357)"
+            },
+            {
+                "component": "table",
+                "type": "docs",
+                "description": "fix Table docs render error by @cc-hearts in [#363](https://github.com/antdv-next/antdv-next/pull/363)"
+            },
+            {
+                "component": "drawer/tabs/time-picker/upload",
+                "type": "docs",
+                "description": "fix render errors in related docs by @cc-hearts in [#364](https://github.com/antdv-next/antdv-next/pull/364)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "fix and update documentation content by @aibayanyu20 in [#367](https://github.com/antdv-next/antdv-next/pull/367)"
+            },
+            {
+                "component": "",
+                "type": "perf",
+                "description": "improve SSR performance by @aibayanyu20 in [#356](https://github.com/antdv-next/antdv-next/pull/356)"
+            },
+            {
+                "component": "",
+                "type": "chore",
+                "description": "bump Vite version and update dependencies by @cc-hearts in [#359](https://github.com/antdv-next/antdv-next/pull/359)"
+            },
+            {
+                "component": "",
+                "type": "chore",
+                "description": "bump Vitest version by @cc-hearts in [#360](https://github.com/antdv-next/antdv-next/pull/360)"
+            }
+        ]
+    },
+    {
+        "version": "1.1.3",
+        "date": null,
+        "changelog": [
+            {
+                "component": "",
+                "type": "feat",
+                "description": "sync Timeline `showLine` alignment with custom `titleHeight` from antd 6.3.2 by @selicens in [#346](https://github.com/antdv-next/antdv-next/pull/346)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Select abnormal value handling by @aibayanyu20 in [#340](https://github.com/antdv-next/antdv-next/pull/340)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Select class parsing in DOM attributes by @aibayanyu20 in [#343](https://github.com/antdv-next/antdv-next/pull/343)"
+            },
+            {
+                "component": "splitter",
+                "type": "fix",
+                "description": "fix incorrect size calculation when partially controlled by @darkingtail in [#347](https://github.com/antdv-next/antdv-next/pull/347)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix InputNumber cursor restore not taking effect in `format` scenarios by @aibayanyu20 in [#352](https://github.com/antdv-next/antdv-next/pull/352)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Form `rules.validateTrigger` errors and support the new `tel` rule by @aibayanyu20 in [#350](https://github.com/antdv-next/antdv-next/pull/350)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "add an entry to open demos in Playground from the docs site by @aibayanyu20 in [#339](https://github.com/antdv-next/antdv-next/pull/339)"
+            }
+        ]
+    },
+    {
+        "version": "1.1.1",
+        "date": null,
+        "changelog": [
+            {
+                "component": "",
+                "type": "feat",
+                "description": "support SFC item components for Timeline / Descriptions / Breadcrumb, and enhance Menu slot rendering with docs/tests by @aibayanyu20 in [#295](https://github.com/antdv-next/antdv-next/pull/295)"
+            },
+            {
+                "component": "",
+                "type": "feat",
+                "description": "Form.Item now supports `tooltip` / `help` / `label` / `extra` slots by @aibayanyu20 in [#301](https://github.com/antdv-next/antdv-next/pull/301)"
+            },
+            {
+                "component": "",
+                "type": "feat",
+                "description": "add `MaskType` by @mengxianghan in [#318](https://github.com/antdv-next/antdv-next/pull/318)"
+            },
+            {
+                "component": "",
+                "type": "feat",
+                "description": "sync Progress and theme preview behavior with antd by @han1548772930 in [#329](https://github.com/antdv-next/antdv-next/pull/329)"
+            },
+            {
+                "component": "",
+                "type": "feat",
+                "description": "sync `sizeType` by @aibayanyu20 in [#338](https://github.com/antdv-next/antdv-next/pull/338)"
+            },
+            {
+                "component": "tour",
+                "type": "fix",
+                "description": "preserve step-level semantic classes in `panelRender` by @shiqkuangsan in [#291](https://github.com/antdv-next/antdv-next/pull/291)"
+            },
+            {
+                "component": "slider",
+                "type": "fix",
+                "description": "correct `tabindex` prop name to `tabIndex` by @shiqkuangsan in [#296](https://github.com/antdv-next/antdv-next/pull/296)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "validate Message uses label correctly by @Rascal-Coder in [#305](https://github.com/antdv-next/antdv-next/pull/305)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Menu keyPath order being reversed by @aibayanyu20 in [#311](https://github.com/antdv-next/antdv-next/pull/311)"
+            },
+            {
+                "component": "modal",
+                "type": "fix",
+                "description": "fix default blur mode not taking effect and update related description by @mengxianghan in [#314](https://github.com/antdv-next/antdv-next/pull/314)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Tooltip icon rendering by @aibayanyu20 in [#313](https://github.com/antdv-next/antdv-next/pull/313)"
+            },
+            {
+                "component": "modal",
+                "type": "fix",
+                "description": "add `KeyboardEvent` support to `onCancel` type by @utianhuan666 in [#324](https://github.com/antdv-next/antdv-next/pull/324)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Form.Item ref inheritance by @aibayanyu20 in [#325](https://github.com/antdv-next/antdv-next/pull/325)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Switch controlled mode by @aibayanyu20 in [#328](https://github.com/antdv-next/antdv-next/pull/328)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Tree `checkedKeys` object handling by @aibayanyu20 in [#333](https://github.com/antdv-next/antdv-next/pull/333)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Segmented motion by @aibayanyu20 in [#334](https://github.com/antdv-next/antdv-next/pull/334)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Skeleton size not taking effect by @aibayanyu20 in [#337](https://github.com/antdv-next/antdv-next/pull/337)"
+            },
+            {
+                "component": "tabs",
+                "type": "test",
+                "description": "add unit tests by @shiqkuangsan in [#290](https://github.com/antdv-next/antdv-next/pull/290)"
+            },
+            {
+                "component": "",
+                "type": "test",
+                "description": "add ColorPicker unit tests and cssinjs unit tests by @aibayanyu20 in [#292](https://github.com/antdv-next/antdv-next/pull/292)"
+            },
+            {
+                "component": "tour",
+                "type": "test",
+                "description": "add unit tests by @shiqkuangsan in [#294](https://github.com/antdv-next/antdv-next/pull/294)"
+            },
+            {
+                "component": "slider",
+                "type": "test",
+                "description": "add unit tests by @shiqkuangsan in [#298](https://github.com/antdv-next/antdv-next/pull/298)"
+            },
+            {
+                "component": "table",
+                "type": "test",
+                "description": "add unit tests by @shiqkuangsan in [#302](https://github.com/antdv-next/antdv-next/pull/302)"
+            },
+            {
+                "component": "image",
+                "type": "test",
+                "description": "add unit tests by @darkingtail in [#307](https://github.com/antdv-next/antdv-next/pull/307)"
+            },
+            {
+                "component": "float-button",
+                "type": "test",
+                "description": "add unit tests by @darkingtail in [#306](https://github.com/antdv-next/antdv-next/pull/306)"
+            },
+            {
+                "component": "time-picker",
+                "type": "test",
+                "description": "add unit tests by @shiqkuangsan in [#308](https://github.com/antdv-next/antdv-next/pull/308)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "add SEO performance improvements by @aibayanyu20 in [#293](https://github.com/antdv-next/antdv-next/pull/293)"
+            },
+            {
+                "component": "covers",
+                "type": "docs",
+                "description": "correct the QRCode property name to `QrCode` (camel case) by @utianhuan666 in [#299](https://github.com/antdv-next/antdv-next/pull/299)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "update docs and LLM script by @aibayanyu20 in [#322](https://github.com/antdv-next/antdv-next/pull/322)"
+            },
+            {
+                "component": "table",
+                "type": "docs",
+                "description": "add column documentation by @cc-hearts in [#336](https://github.com/antdv-next/antdv-next/pull/336)"
+            },
+            {
+                "component": "cascader",
+                "type": "chore",
+                "description": "bump version by @cc-hearts in [#304](https://github.com/antdv-next/antdv-next/pull/304)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "remove duplicate `initMotionCommonLeave` function by @utianhuan666 in [#323](https://github.com/antdv-next/antdv-next/pull/323)"
+            },
+            {
+                "component": "deps",
+                "type": "fix",
+                "description": "bump `@v-c/select` to `^1.0.17` by @shiqkuangsan in [#326](https://github.com/antdv-next/antdv-next/pull/326)"
+            }
+        ]
+    },
+    {
+        "version": "1.1.0",
+        "date": null,
+        "changelog": [
+            {
+                "component": "sponsor",
+                "type": "feat",
+                "description": "optimize the style of the custom amount input box by @ffgenius in [#250](https://github.com/antdv-next/antdv-next/pull/250)"
+            },
+            {
+                "component": "",
+                "type": "feat",
+                "description": "sync antd 6.3.1 by @ffgenius in [#269](https://github.com/antdv-next/antdv-next/pull/269)"
+            },
+            {
+                "component": "readme",
+                "type": "feat",
+                "description": "change contributor image to Open Collective link by @ffgenius in [#274](https://github.com/antdv-next/antdv-next/pull/274)"
+            },
+            {
+                "component": "",
+                "type": "feat",
+                "description": "perf prop types by @aibayanyu20 in [#278](https://github.com/antdv-next/antdv-next/pull/278)"
+            },
+            {
+                "component": "cascader",
+                "type": "fix",
+                "description": "add missing deprecated warning for `popupClassName` by @darkingtail in [#242](https://github.com/antdv-next/antdv-next/pull/242)"
+            },
+            {
+                "component": "collapse",
+                "type": "fix",
+                "description": "use `prefixCls.value` in CollapsePanel no-arrow class by @shiqkuangsan in [#244](https://github.com/antdv-next/antdv-next/pull/244)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix form directive not effect & add test unit by @aibayanyu20 in [#243](https://github.com/antdv-next/antdv-next/pull/243)"
+            },
+            {
+                "component": "tree",
+                "type": "fix",
+                "description": "relax `treeData` type to accept custom data nodes by @darkingtail in [#260](https://github.com/antdv-next/antdv-next/pull/260)"
+            },
+            {
+                "component": "pagination",
+                "type": "fix",
+                "description": "fix change event trigger by @cc-hearts in [#265](https://github.com/antdv-next/antdv-next/pull/265)"
+            },
+            {
+                "component": "image",
+                "type": "fix",
+                "description": "cover slot not rendered when preview mask is configured by @shiqkuangsan in [#272](https://github.com/antdv-next/antdv-next/pull/272)"
+            },
+            {
+                "component": "skeleton",
+                "type": "fix",
+                "description": "synchronise the DOM element styles of Skeleton by @utianhuan666 in [#258](https://github.com/antdv-next/antdv-next/pull/258)"
+            },
+            {
+                "component": "checkbox",
+                "type": "fix",
+                "description": "support controlled state for checkbox by @cc-hearts in [#275](https://github.com/antdv-next/antdv-next/pull/275)"
+            },
+            {
+                "component": "notification",
+                "type": "fix",
+                "description": "correct expose key mismatch for `classNames` by @shiqkuangsan in [#279](https://github.com/antdv-next/antdv-next/pull/279)"
+            },
+            {
+                "component": "a11y",
+                "type": "fix",
+                "description": "apply `prefers-reduced-motion` to Radio and Segmented by @darkingtail in [#281](https://github.com/antdv-next/antdv-next/pull/281)"
+            },
+            {
+                "component": "auto-complete",
+                "type": "fix",
+                "description": "fix default display of custom input placeholder by @cc-hearts in [#283](https://github.com/antdv-next/antdv-next/pull/283)"
+            },
+            {
+                "component": "tabs",
+                "type": "fix",
+                "description": "fix dead onPrevClick/onNextClick deprecation warning by @shiqkuangsan in [#287](https://github.com/antdv-next/antdv-next/pull/287)"
+            },
+            {
+                "component": "tabs",
+                "type": "fix",
+                "description": "fix `renderTabBar` prop variable shadowing by @shiqkuangsan in [#286](https://github.com/antdv-next/antdv-next/pull/286)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix slick height by @aibayanyu20 in [#288](https://github.com/antdv-next/antdv-next/pull/288)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix table loading & no data empty state by @aibayanyu20 in [#289](https://github.com/antdv-next/antdv-next/pull/289)"
+            },
+            {
+                "component": "date-picker",
+                "type": "test",
+                "description": "add unit test by @aibayanyu20 in [#233](https://github.com/antdv-next/antdv-next/pull/233)"
+            },
+            {
+                "component": "progress",
+                "type": "test",
+                "description": "add unit tests for Progress component by @darkingtail in [#246](https://github.com/antdv-next/antdv-next/pull/246)"
+            },
+            {
+                "component": "collapse",
+                "type": "test",
+                "description": "add unit tests for Collapse component by @shiqkuangsan in [#247](https://github.com/antdv-next/antdv-next/pull/247)"
+            },
+            {
+                "component": "popconfirm",
+                "type": "test",
+                "description": "add unit tests for Popconfirm component by @darkingtail in [#248](https://github.com/antdv-next/antdv-next/pull/248)"
+            },
+            {
+                "component": "drawer",
+                "type": "test",
+                "description": "add unit tests for Drawer component by @darkingtail in [#252](https://github.com/antdv-next/antdv-next/pull/252)"
+            },
+            {
+                "component": "message",
+                "type": "test",
+                "description": "add unit tests for Message component by @darkingtail in [#263](https://github.com/antdv-next/antdv-next/pull/263)"
+            },
+            {
+                "component": "dropdown",
+                "type": "test",
+                "description": "add unit tests for Dropdown component by @shiqkuangsan in [#266](https://github.com/antdv-next/antdv-next/pull/266)"
+            },
+            {
+                "component": "mentions",
+                "type": "test",
+                "description": "add unit tests for Mentions component by @shiqkuangsan in [#270](https://github.com/antdv-next/antdv-next/pull/270)"
+            },
+            {
+                "component": "notification",
+                "type": "test",
+                "description": "add unit tests for Notification component by @shiqkuangsan in [#284](https://github.com/antdv-next/antdv-next/pull/284)"
+            },
+            {
+                "component": "docs",
+                "type": "fix",
+                "description": "adjust scrollbar width styling for modal lock by @han1548772930 in [#245](https://github.com/antdv-next/antdv-next/pull/245)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "add examples for browser import by @selicens in [#255](https://github.com/antdv-next/antdv-next/pull/255)"
+            },
+            {
+                "component": "typography",
+                "type": "docs",
+                "description": "fix formatting of `enterIcon` prop description by @wujighostking in [#262](https://github.com/antdv-next/antdv-next/pull/262)"
+            },
+            {
+                "component": "cascader",
+                "type": "docs",
+                "description": "supplement semantic DOM and add unit tests by @ffgenius in [#261](https://github.com/antdv-next/antdv-next/pull/261)"
+            },
+            {
+                "component": "docs",
+                "type": "chore",
+                "description": "add sponsor qrcode for shiqkuangsan by @shiqkuangsan in [#271](https://github.com/antdv-next/antdv-next/pull/271)"
+            },
+            {
+                "component": "",
+                "type": "ci",
+                "description": "change docs scripts generate by @aibayanyu20 in [#249](https://github.com/antdv-next/antdv-next/pull/249)"
+            },
+            {
+                "component": "select/image/util",
+                "type": "chore",
+                "description": "bump version by @cc-hearts in [#277](https://github.com/antdv-next/antdv-next/pull/277)"
+            }
+        ]
+    },
+    {
+        "version": "1.0.5",
+        "date": null,
+        "changelog": [
+            {
+                "component": "",
+                "type": "fix",
+                "description": "passive clear of `v-model` value not working by @aibayanyu20 in [#228](https://github.com/antdv-next/antdv-next/pull/228)"
+            },
+            {
+                "component": "tooltip",
+                "type": "fix",
+                "description": "fix incorrect position calculation when arrow is displayed by @cc-hearts in [#231](https://github.com/antdv-next/antdv-next/pull/231)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "improve two-way binding and one-way data flow handling by @aibayanyu20 in [#230](https://github.com/antdv-next/antdv-next/pull/230)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix app class & style ref deconstruction by @aibayanyu20 in [#232](https://github.com/antdv-next/antdv-next/pull/232)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "Autocomplete input clears automatically when pressing Enter by @aibayanyu20 in [#234](https://github.com/antdv-next/antdv-next/pull/234)"
+            },
+            {
+                "component": "descriptions",
+                "type": "fix",
+                "description": "render `id` prop on root element by @shiqkuangsan in [#236](https://github.com/antdv-next/antdv-next/pull/236)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "DatePicker manual clear not working by @aibayanyu20 in [#237](https://github.com/antdv-next/antdv-next/pull/237)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix Select `showSearchConfig` by @aibayanyu20 in [#240](https://github.com/antdv-next/antdv-next/pull/240)"
+            },
+            {
+                "component": "splitter",
+                "type": "test",
+                "description": "add unit test by @cc-hearts in [#227](https://github.com/antdv-next/antdv-next/pull/227)"
+            },
+            {
+                "component": "steps",
+                "type": "test",
+                "description": "add unit tests by @z-kunf in [#222](https://github.com/antdv-next/antdv-next/pull/222)"
+            },
+            {
+                "component": "popover",
+                "type": "test",
+                "description": "add unit tests for Popover component by @shiqkuangsan in [#239](https://github.com/antdv-next/antdv-next/pull/239)"
+            }
+        ]
+    },
+    {
+        "version": "1.0.4",
+        "date": null,
+        "changelog": [
+            {
+                "component": "",
+                "type": "feat",
+                "description": "add ts & js code source by @cc-hearts in [#187](https://github.com/antdv-next/antdv-next/pull/187)"
+            },
+            {
+                "component": "playground",
+                "type": "feat",
+                "description": "add playground for debugging by @cc-hearts in [#192](https://github.com/antdv-next/antdv-next/pull/192)"
+            },
+            {
+                "component": "",
+                "type": "feat",
+                "description": "sync antd style by @aibayanyu20 in [#223](https://github.com/antdv-next/antdv-next/pull/223)"
+            },
+            {
+                "component": "colorPicker",
+                "type": "fix",
+                "description": "`arrow` is invalid by @ffgenius in [#182](https://github.com/antdv-next/antdv-next/pull/182)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "resolve `verify-commit.js` failure in git worktrees by @shiqkuangsan in [#193](https://github.com/antdv-next/antdv-next/pull/193)"
+            },
+            {
+                "component": "config-provider",
+                "type": "fix",
+                "description": "add missing masonry config to `PASSED_PROPS` by @shiqkuangsan in [#198](https://github.com/antdv-next/antdv-next/pull/198)"
+            },
+            {
+                "component": "tabs",
+                "type": "fix",
+                "description": "unresponsive `content` and slot `content` behavior by @ming4762 in [#197](https://github.com/antdv-next/antdv-next/pull/197)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "update `demoTest` path after playground restructure by @shiqkuangsan in [#201](https://github.com/antdv-next/antdv-next/pull/201)"
+            },
+            {
+                "component": "calendar",
+                "type": "fix",
+                "description": "use correct `Dayjs` type and `v-model:value` in select demo by @shiqkuangsan in [#202](https://github.com/antdv-next/antdv-next/pull/202)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "fix select hover range by @aibayanyu20 in [#207](https://github.com/antdv-next/antdv-next/pull/207)"
+            },
+            {
+                "component": "card",
+                "type": "fix",
+                "description": "emit `update:activeTabKey` and add unit tests by @darkingtail in [#213](https://github.com/antdv-next/antdv-next/pull/213)"
+            },
+            {
+                "component": "tree-select",
+                "type": "fix",
+                "description": "avoid duplicate event transmission by @ming4762 in [#210](https://github.com/antdv-next/antdv-next/pull/210)"
+            },
+            {
+                "component": "skeleton",
+                "type": "test",
+                "description": "add unit tests by @shiqkuangsan in [#183](https://github.com/antdv-next/antdv-next/pull/183)"
+            },
+            {
+                "component": "typography",
+                "type": "test",
+                "description": "add wrapper and semantic tests by @shiqkuangsan in [#194](https://github.com/antdv-next/antdv-next/pull/194)"
+            },
+            {
+                "component": "statistic",
+                "type": "test",
+                "description": "add unit tests by @shiqkuangsan in [#191](https://github.com/antdv-next/antdv-next/pull/191)"
+            },
+            {
+                "component": "spin",
+                "type": "test",
+                "description": "add unit tests by @shiqkuangsan in [#189](https://github.com/antdv-next/antdv-next/pull/189)"
+            },
+            {
+                "component": "tag",
+                "type": "test",
+                "description": "add unit tests by @shiqkuangsan in [#190](https://github.com/antdv-next/antdv-next/pull/190)"
+            },
+            {
+                "component": "masonry",
+                "type": "test",
+                "description": "add unit tests by @shiqkuangsan in [#204](https://github.com/antdv-next/antdv-next/pull/204)"
+            },
+            {
+                "component": "timeline",
+                "type": "test",
+                "description": "add unit tests by @shiqkuangsan in [#205](https://github.com/antdv-next/antdv-next/pull/205)"
+            },
+            {
+                "component": "tooltip",
+                "type": "test",
+                "description": "add tooltip unit test by @cc-hearts in [#211](https://github.com/antdv-next/antdv-next/pull/211)"
+            },
+            {
+                "component": "checkbox",
+                "type": "test",
+                "description": "add unit tests for Checkbox and CheckboxGroup by @darkingtail in [#216](https://github.com/antdv-next/antdv-next/pull/216)"
+            },
+            {
+                "component": "cascader",
+                "type": "test",
+                "description": "add unit tests for Cascader and CascaderPanel by @darkingtail in [#215](https://github.com/antdv-next/antdv-next/pull/215)"
+            },
+            {
+                "component": "carousel",
+                "type": "test",
+                "description": "add unit tests for Carousel by @darkingtail in [#214](https://github.com/antdv-next/antdv-next/pull/214)"
+            },
+            {
+                "component": "grid",
+                "type": "test",
+                "description": "add unit tests for Row and Col components by @shiqkuangsan in [#218](https://github.com/antdv-next/antdv-next/pull/218)"
+            },
+            {
+                "component": "radio",
+                "type": "test",
+                "description": "add unit tests for Radio, RadioGroup, RadioButton by @shiqkuangsan in [#219](https://github.com/antdv-next/antdv-next/pull/219)"
+            },
+            {
+                "component": "descriptions",
+                "type": "test",
+                "description": "add unit tests for Descriptions component by @shiqkuangsan in [#220](https://github.com/antdv-next/antdv-next/pull/220)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "support layer mode by @aibayanyu20 in [#186](https://github.com/antdv-next/antdv-next/pull/186)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "support sponsor by @aibayanyu20 in [#208](https://github.com/antdv-next/antdv-next/pull/208)"
+            },
+            {
+                "component": "",
+                "type": "refactor",
+                "description": "optimize project structure by @ffgenius in [#195](https://github.com/antdv-next/antdv-next/pull/195)"
+            }
+        ]
+    },
+    {
+        "version": "1.0.3",
+        "date": null,
+        "changelog": []
+    },
+    {
+        "version": "1.0.2",
+        "date": null,
+        "changelog": [
+            {
+                "component": "",
+                "type": "feat",
+                "description": "Sync with Ant Design v6.2.3 by @aibayanyu20 in [#102](https://github.com/antdv-next/antdv-next/pull/102)"
+            },
+            {
+                "component": "",
+                "type": "feat",
+                "description": "Add `prepare` script by @qianYuanJ in [#109](https://github.com/antdv-next/antdv-next/pull/109)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "Add global search by @aibayanyu20 in [#122](https://github.com/antdv-next/antdv-next/pull/122)"
+            },
+            {
+                "component": "input-number",
+                "type": "fix",
+                "description": "Resolve min/max responsiveness issue and remove console output by @selicens in [#104](https://github.com/antdv-next/antdv-next/pull/104)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "Correct CSS variable calculation error by @ffgenius in [#107](https://github.com/antdv-next/antdv-next/pull/107)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "Restore Vue Language Tools event hints by @aibayanyu20 in [#108](https://github.com/antdv-next/antdv-next/pull/108)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "Fix RangePicker issues by @aibayanyu20 in [#112](https://github.com/antdv-next/antdv-next/pull/112)"
+            },
+            {
+                "component": "popconfirm",
+                "type": "fix",
+                "description": "Fix invalid async close behavior when using Promise by @selicens in [#114](https://github.com/antdv-next/antdv-next/pull/114)"
+            },
+            {
+                "component": "",
+                "type": "fix",
+                "description": "Set default menu title to avoid `null` by @aibayanyu20 in [#125](https://github.com/antdv-next/antdv-next/pull/125)"
+            },
+            {
+                "component": "i18n",
+                "type": "refactor",
+                "description": "Centralize i18n files by @ffgenius in [#116](https://github.com/antdv-next/antdv-next/pull/116)"
+            },
+            {
+                "component": "i18n",
+                "type": "chore",
+                "description": "Extract inline locales into centralized files by @ffgenius in [#124](https://github.com/antdv-next/antdv-next/pull/124)"
+            },
+            {
+                "component": "",
+                "type": "chore",
+                "description": "Update documentation by @yushi0114 in [#111](https://github.com/antdv-next/antdv-next/pull/111)"
+            },
+            {
+                "component": "typography",
+                "type": "test",
+                "description": "Add tests by @cc-hearts in [#115](https://github.com/antdv-next/antdv-next/pull/115)"
+            },
+            {
+                "component": "auto-complete",
+                "type": "test",
+                "description": "Add unit tests and improve semantic DOM coverage by @ffgenius in [#119](https://github.com/antdv-next/antdv-next/pull/119)"
+            },
+            {
+                "component": "select",
+                "type": "test",
+                "description": "Add unit tests and improve semantic DOM coverage by @ffgenius in [#121](https://github.com/antdv-next/antdv-next/pull/121)"
+            },
+            {
+                "component": "",
+                "type": "docs",
+                "description": "Fix typo in the Vite usage section by @dzzzzzy in [#118](https://github.com/antdv-next/antdv-next/pull/118)"
+            },
+            {
+                "component": "docs",
+                "type": "fix",
+                "description": "Correct typo in the i18n chapter by @dzzzzzy in [#120](https://github.com/antdv-next/antdv-next/pull/120)"
+            }
+        ]
+    },
+    {
+        "version": "1.0.0",
+        "date": "2026-02-03",
+        "changelog": []
+    }
+]
