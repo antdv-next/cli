@@ -1,14 +1,17 @@
-import type { ChangelogFile } from '#/components.ts'
+import type { ChangelogFile, ComponentPropRecord } from '#/components.ts'
 import type { ResolvedVersion } from '@/types.ts'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import process from 'node:process'
 import { defineCommand } from 'citty'
+import { Table } from 'console-table-printer'
 import { defaultArgs } from '@/args/default.ts'
 import { tokenArgs } from '@/args/token.ts'
 import { resolveConfig } from '@/config.ts'
+import { tableBorderStyle } from '@/constants/table.ts'
 import capitalize from '@/utils/capitalize.ts'
 import { getDataPath } from '@/utils/loader.ts'
+import { output } from '@/utils/output.ts'
 import { resolveVersion } from '@/utils/version.ts'
 
 async function loadVersionMetaData(version: ResolvedVersion): Promise<ChangelogFile> {
@@ -18,6 +21,33 @@ async function loadVersionMetaData(version: ResolvedVersion): Promise<ChangelogF
         throw new Error(`v${version.version} not found`)
     }
     return JSON.parse(await readFile(join(getDataPath(), `v${version.version}.json`), 'utf-8')) as ChangelogFile
+}
+
+function outputTokenTable(tokens: ComponentPropRecord[]): string {
+    const p = new Table({
+        style: tableBorderStyle,
+        columns: [
+            { name: 'Token', alignment: 'left' },
+            { name: 'Type', alignment: 'left' },
+            { name: 'Default', alignment: 'left' },
+        ],
+    })
+
+    tokens.forEach((token) => {
+        p.addRow({ Token: token.name, Type: token.type, Default: token.default })
+    })
+
+    return p.render()
+}
+
+function outputTokenMarkdown(tokens: ComponentPropRecord[]): string {
+    let content = '\n| Token | Type | Default |\n'
+    content += '| --- | --- | --- |\n'
+
+    tokens.forEach((token) => {
+        content += `| ${token.name} | ${token.type} | ${token.default} |\n`
+    })
+    return content
 }
 
 export default defineCommand({
@@ -30,12 +60,9 @@ export default defineCommand({
         ...tokenArgs,
     },
     async run({ args }) {
-        console.log('Parsed args:', args)
         const config = resolveConfig(args)
         try {
             const version = await resolveVersion(config)
-
-            console.log(version)
 
             const metaData = await loadVersionMetaData(version)
 
@@ -47,13 +74,24 @@ export default defineCommand({
                 }
 
                 // TODO show format console
-                console.log(`${capitalize(args.component)} Component Tokens:`)
-                console.log(components.at(-1)?.tokens ?? [])
-                process.exit(1)
+                if (args.format !== 'json') {
+                    console.log(`${capitalize(args.component)} Component Tokens:`)
+                }
+                const tokens = components.at(-1)?.tokens ?? []
+                output({
+                    json: { token: tokens },
+                    text: outputTokenTable(tokens),
+                    markdown: outputTokenMarkdown(tokens),
+                }, args.format)
+
+                return ''
             }
 
-            // TODO show format console
-            console.log(metaData.globalTokens)
+            output({
+                json: { token: metaData.globalTokens },
+                text: outputTokenTable(metaData.globalTokens),
+                markdown: outputTokenMarkdown(metaData.globalTokens),
+            }, args.format)
         }
         // eslint-disable-next-line unused-imports/no-unused-vars
         catch (error) {

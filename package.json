@@ -49,6 +49,7 @@
         "@clack/prompts": "^1.7.0",
         "boxen": "^8.0.1",
         "citty": "^0.2.2",
+        "console-table-printer": "^2.16.1",
         "envinfo": "^7.21.0",
         "local-pkg": "^1.2.1",
         "pkg-types": "^2.3.1",
