@@ -12,4 +12,9 @@ export default defineConfig({
             '@/': new URL('./src/', import.meta.url).pathname,
         },
     },
+    test: {
+        include: [
+            './test/**/*.{test,spec}.ts', // 仅运行 test/unit 文件夹下的测试
+        ],
+    },
 })
