@@ -1,7 +1,9 @@
 name: Publish pkg.pr.new
 
 on:
-  pull_request: { }
+  pull_request:
+    paths:
+      - 'src/**'
 
 permissions:
   contents: read
