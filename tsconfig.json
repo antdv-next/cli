@@ -1,24 +1,24 @@
 {
-    "extends": "@lonewolfyx/tsconfig/tsconfig.lib.json",
-    "compilerOptions": {
-        "paths": {
-            "@/*": [
-                "./src/*"
-            ],
-            "#/*": [
-                "./src/types/*"
-            ]
-        },
-        "resolveJsonModule": true,
-        "types": [
-            "node",
-            "tsdown/client"
-        ],
-        "noUnusedLocals": false,
-        "noUnusedParameters": false,
-        "declarationMap": false
+  "extends": "@lonewolfyx/tsconfig/tsconfig.lib.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "#/*": [
+        "./src/types/*"
+      ]
     },
-    "include": [
-        "src/**/*"
-    ]
+    "resolveJsonModule": true,
+    "types": [
+      "node",
+      "tsdown/client"
+    ],
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "declarationMap": false
+  },
+  "include": [
+    "src/**/*"
+  ]
 }

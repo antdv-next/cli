@@ -4,7 +4,7 @@ import type { defaultArgs } from '@/args/default.ts'
 import type { tokenArgs } from '@/args/token.ts'
 
 export type OptionsArgs = ParsedArgs<typeof defaultArgs>
-    & Partial<
-        ParsedArgs<typeof bugArgs>
-        & ParsedArgs<typeof tokenArgs>
-    >
+  & Partial<
+    ParsedArgs<typeof bugArgs>
+    & ParsedArgs<typeof tokenArgs>
+  >
