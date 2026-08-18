@@ -1,0 +1,88 @@
+name: Build size
+
+on:
+  pull_request:
+#    paths:
+#      - 'src/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  compare:
+    name: Compare dist size
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout base commit
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ github.event.pull_request.base.repo.full_name }}
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: before
+          persist-credentials: false
+
+      - name: Checkout pull request commit
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: after
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.9.0
+
+      - name: Use Node.js lts/*
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: pnpm
+          cache-dependency-path: |
+            before/pnpm-lock.yaml
+            after/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: |
+          pnpm --dir before install --frozen-lockfile --ignore-scripts
+          pnpm --dir after install --frozen-lockfile --ignore-scripts
+
+      - name: Build base commit
+        run: pnpm --dir before build
+
+      - name: Build pull request commit
+        run: pnpm --dir after build
+
+      - name: Prepare size artifacts
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          node <<'NODE'
+          import { cp, mkdir, writeFile } from 'node:fs/promises'
+
+          const outputDirectory = '.build-size-artifact'
+
+          await mkdir(outputDirectory, { recursive: true })
+          await cp('before/dist', `${outputDirectory}/before-dist`, { recursive: true })
+          await cp('after/dist', `${outputDirectory}/after-dist`, { recursive: true })
+          await writeFile(`${outputDirectory}/metadata.json`, JSON.stringify({
+            headSha: process.env.HEAD_SHA,
+            prNumber: Number(process.env.PR_NUMBER),
+          }))
+          NODE
+
+      - name: Upload size artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-size-${{ github.run_id }}
+          path: .build-size-artifact
+          include-hidden-files: true
+          retention-days: 1
