@@ -20,6 +20,7 @@ export default defineCommand({
             process.exit(1)
         }
 
+        // TODO antd upgrade 将 CLI 升级到最新版本
         // 执行相关的升级步骤
         // step 2: 获取当前用户下的 pm，默认 npm
         // step 3: 根据 pm 进行运行安装 ANTDV_NEXT_CLI
