@@ -6,7 +6,6 @@ import { description, name, version } from '../package.json' with { type: 'json'
 const CLI_VERSION = __CLI_VERSION__
 
 const subCommands = {
-    // TODO
     'bug': () => import('./commands/bug.ts').then(r => r.default),
     'bug-cli': () => import('./commands/bug-cli.ts').then(r => r.default),
     'changelog': () => import('./commands/changelog.ts').then(r => r.default),
