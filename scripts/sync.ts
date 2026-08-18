@@ -1255,7 +1255,7 @@ async function readComponent(
     const demos = await readDemos(directory, enMarkdown, zhMarkdown)
     const component = {
         name,
-        nameZh: getFrontmatterField(zh.frontmatter, 'name', 'title'),
+        nameZh: getFrontmatterField(zh.frontmatter, 'subtitle'),
         category: getFrontmatterField(en.frontmatter, 'category'),
         categoryZh: getFrontmatterField(zh.frontmatter, 'category'),
         description: getFrontmatterField(en.frontmatter, 'description'),
