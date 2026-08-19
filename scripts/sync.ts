@@ -1,139 +1,41 @@
 // @env node
 
+import type { ResolvedVersion } from '../src/types.ts'
+import type {
+  ChangelogChange,
+  ChangelogFile,
+  ChangelogRecord,
+  ComponentFaqRecord,
+  ComponentPropRecord,
+  ComponentRecord,
+} from '../src/types/components.ts'
+import type { MarkdownHeading } from './extractors/markdown.ts'
+import type { TokenDefaultIndex, TokenFiles, TokenMetaFile } from './extractors/tokens.ts'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath, pathToFileURL } from 'node:url'
+import { fileURLToPath } from 'node:url'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc.js'
 import { parse } from 'semver'
 import { x } from 'tinyexec'
+import { readDemos } from './extractors/demos.ts'
+import { normalizeHeadingTitle, parseHeadings } from './extractors/markdown.ts'
+import { readSemanticStructure } from './extractors/semantic-structure.ts'
+import { getComponentTokens, getGlobalTokens, readTokenData } from './extractors/tokens.ts'
+import { formatDuration, logSection, logStep } from './utils/log.ts'
 
 dayjs.extend(utc)
-
-interface VersionRecord {
-  version: string
-  majorVersion: string
-}
-
-interface ChangelogChange {
-  component: string
-  type: string
-  description: string
-}
 
 interface SourceChangelogChange extends Omit<ChangelogChange, 'component'> {
   component: string | null
 }
 
-interface ChangelogRecord extends VersionRecord {
-  date: string
-  changes: ChangelogChange[]
-}
-
-interface ChangelogFile extends VersionRecord {
-  globalTokens: ComponentPropRecord[]
-  components: ComponentRecord[]
-  changelog: ChangelogRecord[]
-}
-
 type ApiSectionName = 'properties' | 'events' | 'methods'
 type MarkdownTableRow = Record<string, string>
-
-interface ComponentPropRecord {
-  name: string
-  type: string
-  default: string
-  description: string
-  descriptionZh: string
-}
-
-interface ComponentFaqRecord {
-  question: string
-  answer: string
-}
-
-interface ComponentDemoRecord {
-  name: string
-  title: string
-  titleZh: string
-  description: string
-  descriptionZh: string
-  code: string
-}
-
-interface ComponentSemanticStructureRecord {
-  key: string
-  description: string
-  descriptionZh: string
-}
-
-interface ComponentRecord {
-  name: string
-  nameZh: string
-  category: string
-  categoryZh: string
-  description: string
-  descriptionZh: string
-  whenToUse: string
-  whenToUseZh: string
-  doc: string
-  docZh: string
-  subComponents: Record<string, ComponentPropRecord[]>
-  props: ComponentPropRecord[]
-  tokens: ComponentPropRecord[]
-  faq: ComponentFaqRecord[]
-  demos: ComponentDemoRecord[]
-  semanticStructure: ComponentSemanticStructureRecord[]
-}
-
-interface ComponentTokenMeta {
-  source: string
-  token: string
-  type: string
-  desc: string
-  descEn: string
-  name: string
-  nameEn: string
-}
-
-interface TokenMetaFile {
-  global: Record<string, unknown>
-  components: Record<string, unknown>
-}
-
-interface TokenDefaultIndex {
-  global: Map<string, string>
-  components: Map<string, Map<string, string>>
-}
-
-interface TokenFiles {
-  tokenMeta: string
-  token: string
-}
 
 interface VersionSourceData {
   globalTokens: ComponentPropRecord[]
   components: ComponentRecord[]
-}
-
-interface DemoReference {
-  src: string
-  title: string
-}
-
-interface ElementBlock {
-  start: number
-  openingTag: string
-  content: string
-  fullContent: string
-}
-
-interface MarkdownHeading {
-  level: number
-  title: string
-  anchor: string
-  start: number
-  contentStart: number
 }
 
 interface ParsedApi {
@@ -158,7 +60,7 @@ interface ParsedComponentDocument {
 type VersionFile = Record<string, Record<string, string>>
 
 interface ParsedTag {
-  record: VersionRecord
+  record: ResolvedVersion
   major: number
   minor: number
   patch: number
@@ -186,18 +88,6 @@ const REMOTE_TAG_PATTERN = /^[0-9a-f]+\s+refs\/tags\/(.+)$/i
 const MINOR_FILE_PATTERN = /^v(\d+)\.(\d+)\.(\d+)\.json$/
 
 const sourceDataCache = new Map<string, Promise<VersionSourceData>>()
-
-function logStep(scope: string, message: string): void {
-  console.log(`[${scope}] ${message}`)
-}
-
-function logSection(title: string): void {
-  console.log(`\n=== ${title} ===\n`)
-}
-
-function formatDuration(startedAt: number): string {
-  return `${((Date.now() - startedAt) / 1000).toFixed(1)}s`
-}
 
 function parseFrontmatterValue(rawValue: string): string {
   const value = rawValue.trim()
@@ -268,60 +158,6 @@ function parseFrontmatter(markdown: string): Record<string, string> {
   return frontmatter
 }
 
-function parseHeadings(markdown: string): MarkdownHeading[] {
-  const headings: MarkdownHeading[] = []
-  const lines = markdown.split('\n')
-  let offset = 0
-  let fence = ''
-
-  for (const rawLine of lines) {
-    const line = rawLine.endsWith('\r') ? rawLine.slice(0, -1) : rawLine
-    const trimmedLine = line.trimStart()
-    const fenceMarker = trimmedLine.startsWith('```')
-      ? '```'
-      : trimmedLine.startsWith('~~~') ? '~~~' : ''
-
-    if (fenceMarker) {
-      fence = fence === fenceMarker ? '' : fence || fenceMarker
-      offset += rawLine.length + 1
-      continue
-    }
-
-    if (fence) {
-      offset += rawLine.length + 1
-      continue
-    }
-
-    const headingMatch = line.match(/^(#{1,6})[ \t]+/)
-
-    if (!headingMatch) {
-      offset += rawLine.length + 1
-      continue
-    }
-
-    let rawTitle = line.slice(headingMatch[0].length).trim()
-
-    while (rawTitle.endsWith('#')) {
-      rawTitle = rawTitle.slice(0, -1).trimEnd()
-    }
-
-    const anchorMatch = rawTitle.match(/\s*\{#([^}]+)\}\s*$/)
-    const title = rawTitle.replace(/\s*\{#[^}]+\}\s*$/, '').trim()
-
-    headings.push({
-      level: headingMatch[1]!.length,
-      title,
-      anchor: anchorMatch?.[1]?.toLowerCase() ?? '',
-      start: offset,
-      contentStart: offset + line.length,
-    })
-
-    offset += rawLine.length + 1
-  }
-
-  return headings
-}
-
 function getHeadingContent(
   markdown: string,
   headings: MarkdownHeading[],
@@ -339,14 +175,6 @@ function getHeadingContent(
     .find(candidate => candidate.level <= boundaryLevel)
 
   return markdown.slice(heading.contentStart, nextHeading?.start ?? markdown.length).trim()
-}
-
-function normalizeHeadingTitle(title: string): string {
-  return title
-    .replace(/[`*_~]/g, '')
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
-    .trim()
-    .toLowerCase()
 }
 
 function getApiSectionName(heading: MarkdownHeading): ApiSectionName | undefined {
@@ -757,218 +585,6 @@ function localizeSubComponents(
   return records
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
-}
-
-function parseTokenMetaFile(value: unknown, filename: string): TokenMetaFile {
-  if (!isRecord(value) || !isRecord(value.components)) {
-    throw new TypeError(`Invalid token metadata in ${filename}`)
-  }
-
-  return {
-    global: isRecord(value.global) ? value.global : {},
-    components: value.components,
-  }
-}
-
-function parseComponentTokenMeta(value: unknown): ComponentTokenMeta | undefined {
-  if (!isRecord(value) || typeof value.token !== 'string') {
-    return undefined
-  }
-
-  return {
-    source: typeof value.source === 'string' ? value.source : '',
-    token: value.token,
-    type: typeof value.type === 'string' ? value.type : '',
-    desc: typeof value.desc === 'string' ? value.desc : '',
-    descEn: typeof value.descEn === 'string' ? value.descEn : '',
-    name: typeof value.name === 'string' ? value.name : '',
-    nameEn: typeof value.nameEn === 'string' ? value.nameEn : '',
-  }
-}
-
-function stringifyTokenDefault(value: unknown): string {
-  if (value === undefined || value === null) {
-    return ''
-  }
-
-  if (typeof value === 'string') {
-    return value
-  }
-
-  if (typeof value === 'number' || typeof value === 'boolean') {
-    return String(value)
-  }
-
-  return JSON.stringify(value)
-}
-
-function getTokenDefaultCandidate(value: unknown): unknown {
-  if (!isRecord(value)) {
-    return value
-  }
-
-  if ('default' in value) {
-    return value.default
-  }
-  if ('defaultValue' in value) {
-    return value.defaultValue
-  }
-  if ('value' in value) {
-    return value.value
-  }
-
-  return undefined
-}
-
-function setTokenDefault(
-  index: TokenDefaultIndex,
-  token: string,
-  value: unknown,
-  componentName?: string,
-): void {
-  const defaultValue = stringifyTokenDefault(value)
-
-  if (componentName) {
-    const componentDefaults = index.components.get(componentName) ?? new Map<string, string>()
-
-    if (!componentDefaults.has(token)) {
-      componentDefaults.set(token, defaultValue)
-    }
-
-    index.components.set(componentName, componentDefaults)
-    return
-  }
-
-  if (!index.global.has(token)) {
-    index.global.set(token, defaultValue)
-  }
-}
-
-function createTokenDefaultIndex(
-  tokenData: unknown,
-  componentNames: Set<string>,
-): TokenDefaultIndex {
-  const index: TokenDefaultIndex = {
-    global: new Map(),
-    components: new Map(),
-  }
-
-  function visit(value: unknown, componentName?: string): void {
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        visit(item, componentName)
-      }
-      return
-    }
-
-    if (!isRecord(value)) {
-      return
-    }
-
-    const token = typeof value.token === 'string'
-      ? value.token
-      : typeof value.name === 'string' ? value.name : undefined
-    const tokenDefault = getTokenDefaultCandidate(value)
-
-    if (token && tokenDefault !== undefined) {
-      setTokenDefault(index, token, tokenDefault, componentName)
-    }
-
-    for (const [key, nestedValue] of Object.entries(value)) {
-      if (key === 'components' && isRecord(nestedValue)) {
-        for (const [nestedComponentName, componentValue] of Object.entries(nestedValue)) {
-          visit(componentValue, nestedComponentName)
-        }
-        continue
-      }
-
-      const nestedComponentName = componentNames.has(key) ? key : componentName
-      const nestedDefault = getTokenDefaultCandidate(nestedValue)
-
-      if (nestedDefault !== undefined) {
-        setTokenDefault(index, key, nestedDefault, nestedComponentName)
-      }
-
-      visit(nestedValue, nestedComponentName)
-    }
-  }
-
-  visit(tokenData)
-  return index
-}
-
-async function readJsonFile(filename: string): Promise<unknown> {
-  const source = await fs.readFile(filename, 'utf8')
-
-  try {
-    return JSON.parse(source)
-  }
-  catch {
-    throw new Error(`Invalid JSON in ${filename}`)
-  }
-}
-
-async function readTokenData(tokenFiles: TokenFiles): Promise<{
-  tokenMeta: TokenMetaFile
-  tokenDefaults: TokenDefaultIndex
-}> {
-  const [rawTokenMeta, tokenData] = await Promise.all([
-    readJsonFile(tokenFiles.tokenMeta),
-    readJsonFile(tokenFiles.token),
-  ])
-  const tokenMeta = parseTokenMetaFile(rawTokenMeta, tokenFiles.tokenMeta)
-
-  return {
-    tokenMeta,
-    tokenDefaults: createTokenDefaultIndex(
-      tokenData,
-      new Set(Object.keys(tokenMeta.components)),
-    ),
-  }
-}
-
-function getComponentTokens(
-  componentName: string,
-  tokenMeta: TokenMetaFile,
-  tokenDefaults: TokenDefaultIndex,
-): ComponentPropRecord[] {
-  const rawTokens = tokenMeta.components[componentName]
-
-  if (!Array.isArray(rawTokens)) {
-    return []
-  }
-
-  return rawTokens
-    .map(parseComponentTokenMeta)
-    .filter(token => token !== undefined)
-    .map(token => ({
-      name: token.token,
-      type: token.type,
-      default: tokenDefaults.components.get(componentName)?.get(token.token)
-        ?? tokenDefaults.global.get(token.token)
-        ?? '',
-      description: token.descEn,
-      descriptionZh: token.desc,
-    }))
-}
-
-function getGlobalTokens(
-  tokenMeta: TokenMetaFile,
-  tokenDefaults: TokenDefaultIndex,
-): ComponentPropRecord[] {
-  return Object.entries(tokenMeta.global)
-    .filter((entry): entry is [string, Record<string, unknown>] => isRecord(entry[1]))
-    .map(([name, metadata]) => ({
-      name,
-      type: typeof metadata.type === 'string' ? metadata.type : '',
-      default: tokenDefaults.global.get(name) ?? '',
-      description: typeof metadata.descEn === 'string' ? metadata.descEn : '',
-      descriptionZh: typeof metadata.desc === 'string' ? metadata.desc : '',
-    }))
-}
-
 function parseFaq(markdown: string): ComponentFaqRecord[] {
   const headings = parseHeadings(markdown)
   const faqIndex = headings.findIndex(heading =>
@@ -1000,273 +616,6 @@ function parseFaq(markdown: string): ComponentFaqRecord[] {
   }
 
   return faq
-}
-
-function findElementStart(source: string, tagName: string, fromIndex: number): number {
-  const marker = `<${tagName}`
-  let index = source.indexOf(marker, fromIndex)
-
-  while (index !== -1) {
-    const boundary = source[index + marker.length]
-
-    if (boundary === '>' || boundary === '/' || boundary === ' ' || boundary === '\t' || boundary === '\n' || boundary === '\r') {
-      return index
-    }
-
-    index = source.indexOf(marker, index + marker.length)
-  }
-
-  return -1
-}
-
-function extractElementBlocks(source: string, tagName: string): ElementBlock[] {
-  const blocks: ElementBlock[] = []
-  let searchIndex = 0
-
-  while (searchIndex < source.length) {
-    const start = findElementStart(source, tagName, searchIndex)
-
-    if (start === -1) {
-      break
-    }
-
-    const openingEnd = source.indexOf('>', start)
-
-    if (openingEnd === -1) {
-      break
-    }
-
-    const openingTag = source.slice(start, openingEnd + 1)
-
-    if (openingTag.trimEnd().endsWith('/>')) {
-      blocks.push({
-        start,
-        openingTag,
-        content: '',
-        fullContent: openingTag,
-      })
-      searchIndex = openingEnd + 1
-      continue
-    }
-
-    let depth = 1
-    let cursor = openingEnd + 1
-    let closingStart = -1
-    let closingEnd = -1
-
-    while (depth > 0) {
-      const nextOpening = findElementStart(source, tagName, cursor)
-      const nextClosing = source.indexOf(`</${tagName}`, cursor)
-
-      if (nextClosing === -1) {
-        break
-      }
-
-      if (nextOpening !== -1 && nextOpening < nextClosing) {
-        const nestedOpeningEnd = source.indexOf('>', nextOpening)
-
-        if (nestedOpeningEnd === -1) {
-          break
-        }
-
-        if (!source.slice(nextOpening, nestedOpeningEnd + 1).trimEnd().endsWith('/>')) {
-          depth += 1
-        }
-
-        cursor = nestedOpeningEnd + 1
-        continue
-      }
-
-      closingStart = nextClosing
-      closingEnd = source.indexOf('>', closingStart)
-
-      if (closingEnd === -1) {
-        break
-      }
-
-      depth -= 1
-      cursor = closingEnd + 1
-    }
-
-    if (depth !== 0 || closingStart === -1 || closingEnd === -1) {
-      searchIndex = openingEnd + 1
-      continue
-    }
-
-    blocks.push({
-      start,
-      openingTag,
-      content: source.slice(openingEnd + 1, closingStart),
-      fullContent: source.slice(start, closingEnd + 1),
-    })
-    searchIndex = closingEnd + 1
-  }
-
-  return blocks
-}
-
-function getElementAttribute(openingTag: string, attributeName: string): string {
-  const lowerOpeningTag = openingTag.toLowerCase()
-  const lowerAttributeName = attributeName.toLowerCase()
-  let index = lowerOpeningTag.indexOf(lowerAttributeName)
-
-  while (index !== -1) {
-    const previousCharacter = lowerOpeningTag[index - 1]
-    let cursor = index + lowerAttributeName.length
-
-    if (index > 0 && previousCharacter !== ' ' && previousCharacter !== '\t' && previousCharacter !== '\n' && previousCharacter !== '\r') {
-      index = lowerOpeningTag.indexOf(lowerAttributeName, cursor)
-      continue
-    }
-
-    while (/\s/.test(openingTag[cursor] ?? '')) {
-      cursor += 1
-    }
-
-    if (openingTag[cursor] !== '=') {
-      index = lowerOpeningTag.indexOf(lowerAttributeName, cursor)
-      continue
-    }
-
-    cursor += 1
-
-    while (/\s/.test(openingTag[cursor] ?? '')) {
-      cursor += 1
-    }
-
-    const quote = openingTag[cursor]
-
-    if (quote !== '"' && quote !== '\'') {
-      return ''
-    }
-
-    const valueEnd = openingTag.indexOf(quote, cursor + 1)
-    return valueEnd === -1 ? '' : openingTag.slice(cursor + 1, valueEnd)
-  }
-
-  return ''
-}
-
-function parseDemoReferences(markdown: string): DemoReference[] {
-  const headings = parseHeadings(markdown)
-  const semanticSections = headings
-    .map((heading, index) => ({ heading, index }))
-    .filter(({ heading }) =>
-      heading.anchor === 'semantic-dom'
-      || ['semantic dom', '语义化 dom'].includes(normalizeHeadingTitle(heading.title)),
-    )
-    .map(({ heading, index }) => ({
-      start: heading.start,
-      end: headings
-        .slice(index + 1)
-        .find(candidate => candidate.level <= heading.level)
-        ?.start ?? markdown.length,
-    }))
-
-  return extractElementBlocks(markdown, 'demo')
-    .filter(block => !semanticSections.some(section =>
-      block.start >= section.start && block.start < section.end,
-    ))
-    .map(block => ({
-      src: getElementAttribute(block.openingTag, 'src'),
-      title: block.content.trim(),
-    }))
-    .filter(reference => reference.src !== '')
-}
-
-function getDemoDescription(source: string, language: string): string {
-  const docs = extractElementBlocks(source, 'docs')
-    .find(block => getElementAttribute(block.openingTag, 'lang') === language)
-
-  return docs?.content.trim() ?? ''
-}
-
-function getDemoCode(source: string): string {
-  return [
-    ...extractElementBlocks(source, 'script'),
-    ...extractElementBlocks(source, 'template'),
-  ]
-    .sort((left, right) => left.start - right.start)
-    .map(block => block.fullContent.trim())
-    .join('\n\n')
-}
-
-async function readDemos(
-  componentDirectory: string,
-  enMarkdown: string,
-  zhMarkdown: string,
-): Promise<ComponentDemoRecord[]> {
-  const componentScope = `component:${path.basename(componentDirectory)}`
-  const enReferences = parseDemoReferences(enMarkdown)
-  const zhReferences = parseDemoReferences(zhMarkdown)
-  const enBySrc = new Map(enReferences.map(reference => [reference.src, reference]))
-  const zhBySrc = new Map(zhReferences.map(reference => [reference.src, reference]))
-  const sources = [...new Set([...enBySrc.keys(), ...zhBySrc.keys()])]
-
-  const demos = await Promise.all(sources.map(async (src): Promise<ComponentDemoRecord | undefined> => {
-    const demoFile = path.resolve(componentDirectory, src)
-    const relativeDemoFile = path.relative(componentDirectory, demoFile)
-
-    if (relativeDemoFile.startsWith('..') || path.isAbsolute(relativeDemoFile)) {
-      throw new Error(`Demo source is outside component directory: ${src}`)
-    }
-
-    let source: string
-
-    try {
-      source = await fs.readFile(demoFile, 'utf8')
-    }
-    catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        logStep(componentScope, `Skipping missing demo: ${src}`)
-        return undefined
-      }
-
-      throw error
-    }
-
-    return {
-      name: path.basename(src, path.extname(src)),
-      title: enBySrc.get(src)?.title ?? '',
-      titleZh: zhBySrc.get(src)?.title ?? '',
-      description: getDemoDescription(source, 'en-US'),
-      descriptionZh: getDemoDescription(source, 'zh-CN'),
-      code: getDemoCode(source),
-    }
-  }))
-
-  return demos.filter(demo => demo !== undefined)
-}
-
-async function readSemanticStructure(
-  componentDirectory: string,
-): Promise<ComponentSemanticStructureRecord[]> {
-  const localesFile = path.join(componentDirectory, 'locales.ts')
-  let modificationTime: number
-
-  try {
-    modificationTime = (await fs.stat(localesFile)).mtimeMs
-  }
-  catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      return []
-    }
-
-    throw error
-  }
-
-  const localesModule = await import(
-    `${pathToFileURL(localesFile).href}?mtime=${modificationTime}`,
-  ) as { locales: Record<'cn' | 'en', Record<string, string>> }
-  const locales = localesModule.locales
-
-  const { en, cn } = locales
-
-  return [...new Set([...Object.keys(en), ...Object.keys(cn)])].map(key => ({
-    key,
-    description: en[key] ?? '',
-    descriptionZh: cn[key] ?? '',
-  }))
 }
 
 function getFrontmatterField(
