@@ -2,7 +2,7 @@
 
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc.js'
 import { parse } from 'semver'
@@ -61,6 +61,12 @@ interface ComponentDemoRecord {
   code: string
 }
 
+interface ComponentSemanticStructureRecord {
+  key: string
+  description: string
+  descriptionZh: string
+}
+
 interface ComponentRecord {
   name: string
   nameZh: string
@@ -77,6 +83,7 @@ interface ComponentRecord {
   tokens: ComponentPropRecord[]
   faq: ComponentFaqRecord[]
   demos: ComponentDemoRecord[]
+  semanticStructure: ComponentSemanticStructureRecord[]
 }
 
 interface ComponentTokenMeta {
@@ -1141,7 +1148,25 @@ function getElementAttribute(openingTag: string, attributeName: string): string 
 }
 
 function parseDemoReferences(markdown: string): DemoReference[] {
+  const headings = parseHeadings(markdown)
+  const semanticSections = headings
+    .map((heading, index) => ({ heading, index }))
+    .filter(({ heading }) =>
+      heading.anchor === 'semantic-dom'
+      || ['semantic dom', '语义化 dom'].includes(normalizeHeadingTitle(heading.title)),
+    )
+    .map(({ heading, index }) => ({
+      start: heading.start,
+      end: headings
+        .slice(index + 1)
+        .find(candidate => candidate.level <= heading.level)
+        ?.start ?? markdown.length,
+    }))
+
   return extractElementBlocks(markdown, 'demo')
+    .filter(block => !semanticSections.some(section =>
+      block.start >= section.start && block.start < section.end,
+    ))
     .map(block => ({
       src: getElementAttribute(block.openingTag, 'src'),
       title: block.content.trim(),
@@ -1213,6 +1238,37 @@ async function readDemos(
   return demos.filter(demo => demo !== undefined)
 }
 
+async function readSemanticStructure(
+  componentDirectory: string,
+): Promise<ComponentSemanticStructureRecord[]> {
+  const localesFile = path.join(componentDirectory, 'locales.ts')
+  let modificationTime: number
+
+  try {
+    modificationTime = (await fs.stat(localesFile)).mtimeMs
+  }
+  catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return []
+    }
+
+    throw error
+  }
+
+  const localesModule = await import(
+    `${pathToFileURL(localesFile).href}?mtime=${modificationTime}`,
+  ) as { locales: Record<'cn' | 'en', Record<string, string>> }
+  const locales = localesModule.locales
+
+  const { en, cn } = locales
+
+  return [...new Set([...Object.keys(en), ...Object.keys(cn)])].map(key => ({
+    key,
+    description: en[key] ?? '',
+    descriptionZh: cn[key] ?? '',
+  }))
+}
+
 function getFrontmatterField(
   frontmatter: Record<string, string>,
   field: string,
@@ -1252,7 +1308,10 @@ async function readComponent(
   const en = parseComponentDocument(enMarkdown)
   const zh = parseComponentDocument(zhMarkdown)
   const name = getFrontmatterField(en.frontmatter, 'name', 'title')
-  const demos = await readDemos(directory, enMarkdown, zhMarkdown)
+  const [demos, semanticStructure] = await Promise.all([
+    readDemos(directory, enMarkdown, zhMarkdown),
+    readSemanticStructure(directory),
+  ])
   const component = {
     name,
     nameZh: getFrontmatterField(zh.frontmatter, 'subtitle'),
@@ -1269,11 +1328,12 @@ async function readComponent(
     tokens: getComponentTokens(name, tokenMeta, tokenDefaults),
     faq: parseFaq(enMarkdown),
     demos,
+    semanticStructure,
   }
 
   logStep(
     componentScope,
-    `Parsed ${component.props.length} props, ${component.tokens.length} tokens, ${component.faq.length} FAQs and ${component.demos.length} demos`,
+    `Parsed ${component.props.length} props, ${component.tokens.length} tokens, ${component.faq.length} FAQs, ${component.demos.length} demos and ${component.semanticStructure.length} semantic structures`,
   )
 
   return component
