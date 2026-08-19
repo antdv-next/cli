@@ -1,17 +1,19 @@
 import type { ResolvedVersion } from '@/types.ts'
 
-export interface ChangelogFile extends ResolvedVersion {
+export interface ChangelogFile {
+  version: string
+  majorVersion: string
   globalTokens: ComponentPropRecord[]
   components: ComponentRecord[]
   changelog: ChangelogRecord[]
 }
 
-interface ChangelogRecord extends ResolvedVersion {
+export interface ChangelogRecord extends ResolvedVersion {
   date: string
   changes: ChangelogChange[]
 }
 
-interface ChangelogChange {
+export interface ChangelogChange {
   component: string
   type: string
   description: string
