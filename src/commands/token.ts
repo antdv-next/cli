@@ -1,8 +1,8 @@
 import type { ComponentPropRecord } from '#/components.ts'
 import { defineCommand } from 'citty'
 import { Table } from 'console-table-printer'
+import { componentArgs } from '@/args/component.ts'
 import { defaultArgs } from '@/args/default.ts'
-import { tokenArgs } from '@/args/token.ts'
 import { resolveConfig } from '@/config.ts'
 import { tableBorderStyle } from '@/constants/table.ts'
 import capitalize from '@/utils/capitalize.ts'
@@ -45,7 +45,7 @@ export default defineCommand({
   },
   args: {
     ...defaultArgs,
-    ...tokenArgs,
+    ...componentArgs,
   },
   async run({ args }) {
     const config = resolveConfig(args)
