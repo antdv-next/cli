@@ -4,6 +4,7 @@ import { componentArgs } from '@/args/component.ts'
 import { defaultArgs } from '@/args/default.ts'
 import { resolveConfig } from '@/config.ts'
 import capitalize from '@/utils/capitalize.ts'
+import { logErrorComponent } from '@/utils/error.ts'
 import { loadComponent, loadVersionMetaData } from '@/utils/loader.ts'
 import { output } from '@/utils/output.ts'
 import { resolveVersion } from '@/utils/version.ts'
@@ -67,7 +68,7 @@ export default defineCommand({
       }, args.format)
     }
     catch (error) {
-      console.log(`Error: Component ${component} not found!`)
+      logErrorComponent(args)
     }
   },
 })
