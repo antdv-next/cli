@@ -48,7 +48,7 @@ export async function fetchTokens(version: string): Promise<void> {
       },
     })
   }
-  // eslint-disable-next-line unused-imports/no-unused-vars
+
   catch (error) {
   }
 }
@@ -70,7 +70,7 @@ export async function loaderVersionToken(version: string) {
       descriptionZh: g.desc,
     })) as TokenData[]
   }
-  // eslint-disable-next-line unused-imports/no-unused-vars
+
   catch (error) {
     return []
   }

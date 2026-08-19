@@ -80,7 +80,7 @@ export default defineCommand({
         markdown: outputTokenMarkdown(metaData.globalTokens),
       }, args.format)
     }
-    // eslint-disable-next-line unused-imports/no-unused-vars
+
     catch (error) {
       console.log(`Error: Component '${args.component}' not found`)
       process.exit(1)

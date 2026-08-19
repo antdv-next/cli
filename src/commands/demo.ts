@@ -121,7 +121,7 @@ export default defineCommand({
 
       console.log(outputDemoCode(demos[args.name]!, args))
     }
-    // eslint-disable-next-line unused-imports/no-unused-vars
+
     catch (error) {
       console.log(`Error: Component '${args.component}' not found`)
     }
