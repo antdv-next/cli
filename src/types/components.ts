@@ -39,6 +39,12 @@ export interface ComponentDemoRecord {
   code: string
 }
 
+export interface ComponentSemanticStructureRecord {
+  key: string
+  description: string
+  descriptionZh: string
+}
+
 export interface ComponentRecord {
   name: string
   nameZh: string
@@ -55,4 +61,5 @@ export interface ComponentRecord {
   tokens: ComponentPropRecord[]
   faq: ComponentFaqRecord[]
   demos: ComponentDemoRecord[]
+  semanticStructure: ComponentSemanticStructureRecord[]
 }
