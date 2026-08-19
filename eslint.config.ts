@@ -14,6 +14,7 @@ const config = antfu({
     'node/prefer-global/process': 'off',
     'antfu/top-level-function': 'off',
     'regexp/no-unused-capturing-group': 'off',
+    'unused-imports/no-unused-vars': 'off',
   },
   yaml: {
     overrides: {
