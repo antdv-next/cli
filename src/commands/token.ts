@@ -7,6 +7,7 @@ import { tokenArgs } from '@/args/token.ts'
 import { resolveConfig } from '@/config.ts'
 import { tableBorderStyle } from '@/constants/table.ts'
 import capitalize from '@/utils/capitalize.ts'
+import { logErrorComponent } from '@/utils/error.ts'
 import { loadVersionMetaData } from '@/utils/loader.ts'
 import { output } from '@/utils/output.ts'
 import { resolveVersion } from '@/utils/version.ts'
@@ -82,8 +83,7 @@ export default defineCommand({
     }
 
     catch (error) {
-      console.log(`Error: Component '${args.component}' not found`)
-      process.exit(1)
+      logErrorComponent(args)
     }
   },
 })
