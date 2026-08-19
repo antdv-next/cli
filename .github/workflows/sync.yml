@@ -14,7 +14,37 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      needs_sync: ${{ steps.check-version.outputs.needs_sync }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install latest pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check if sync needed
+        id: check-version
+        run: pnpm exec tsx scripts/check-sync-needed.ts
+        env:
+          GH_TOKEN: ${{ github.token }}
+
   sync:
+    needs: check
+    if: needs.check.outputs.needs_sync == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
