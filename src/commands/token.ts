@@ -1,5 +1,4 @@
 import type { ComponentPropRecord } from '#/components.ts'
-import process from 'node:process'
 import { defineCommand } from 'citty'
 import { Table } from 'console-table-printer'
 import { defaultArgs } from '@/args/default.ts'
@@ -58,8 +57,8 @@ export default defineCommand({
       if (args.component) {
         const components = metaData.components.filter(c => c.name === capitalize(args.component))
         if (!components.length) {
-          console.log(`Error: Component ${args.component} not Found`)
-          process.exit(1)
+          logErrorComponent(args)
+          return ''
         }
 
         if (args.format !== 'json') {
