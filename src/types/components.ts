@@ -19,12 +19,21 @@ export interface ChangelogChange {
   description: string
 }
 
-export interface ComponentPropRecord {
+export interface ComponentApiItemRecord {
   name: string
   type: string
   default: string
   description: string
   descriptionZh: string
+}
+
+export type ComponentPropRecord = ComponentApiItemRecord
+
+export interface ComponentApiRecord {
+  properties: ComponentApiItemRecord[]
+  events: ComponentApiItemRecord[]
+  slots: ComponentApiItemRecord[]
+  methods: ComponentApiItemRecord[]
 }
 
 export interface ComponentFaqRecord {
@@ -58,8 +67,9 @@ export interface ComponentRecord {
   whenToUseZh: string
   doc: string
   docZh: string
-  subComponents: Record<string, ComponentPropRecord[]>
-  props: ComponentPropRecord[]
+  subComponents: string[]
+  subComponentProps: Record<string, ComponentApiRecord>
+  props: ComponentApiRecord
   tokens: ComponentPropRecord[]
   faq: ComponentFaqRecord[]
   demos: ComponentDemoRecord[]

@@ -5,6 +5,7 @@ import type {
   ChangelogChange,
   ChangelogFile,
   ChangelogRecord,
+  ComponentApiRecord,
   ComponentFaqRecord,
   ComponentPropRecord,
   ComponentRecord,
@@ -13,7 +14,7 @@ import type { MarkdownHeading } from './extractors/markdown.ts'
 import type { TokenDefaultIndex, TokenFiles, TokenMetaFile } from './extractors/tokens.ts'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc.js'
 import { parse } from 'semver'
@@ -30,7 +31,7 @@ interface SourceChangelogChange extends Omit<ChangelogChange, 'component'> {
   component: string | null
 }
 
-type ApiSectionName = 'properties' | 'events' | 'methods'
+type ApiSectionName = 'properties' | 'events' | 'slots' | 'methods'
 type MarkdownTableRow = Record<string, string>
 
 interface VersionSourceData {
@@ -41,11 +42,13 @@ interface VersionSourceData {
 interface ParsedApi {
   properties: MarkdownTableRow[]
   events: MarkdownTableRow[]
+  slots: MarkdownTableRow[]
   methods: MarkdownTableRow[]
 }
 
 interface ParsedSubComponent {
   key: string
+  matchKeys: string[]
   name: string
   props: ParsedApi
 }
@@ -178,27 +181,35 @@ function getHeadingContent(
 }
 
 function getApiSectionName(heading: MarkdownHeading): ApiSectionName | undefined {
-  const anchor = heading.anchor.replace(/^api-/, '')
-
-  if (anchor === 'props' || anchor === 'properties') {
-    return 'properties'
-  }
-  if (anchor === 'events' || anchor === 'event') {
-    return 'events'
-  }
-  if (anchor === 'methods' || anchor === 'method') {
-    return 'methods'
-  }
-
+  const anchorSection = heading.anchor
+    .toLowerCase()
+    .match(/(?:^|-)(props?|property|properties|events?|slots?|methods?|arguments?)$/)?.[1]
   const title = normalizeHeadingTitle(heading.title)
+    .replace(/\s*\{[^}]+\}\s*$/, '')
+    .replace(/\s+/g, ' ')
 
-  if (['属性', 'property', 'properties', 'props'].includes(title)) {
+  if (
+    ['prop', 'props', 'properties', 'property', 'argument', 'arguments'].includes(anchorSection ?? '')
+    || ['属性', '参数', 'argument', 'arguments', 'property', 'properties', 'props', 'common api'].includes(title)
+  ) {
     return 'properties'
   }
-  if (['事件', 'event', 'events'].includes(title)) {
+  if (
+    ['event', 'events'].includes(anchorSection ?? '')
+    || ['事件', 'event', 'events'].includes(title)
+  ) {
     return 'events'
   }
-  if (['方法', 'method', 'methods'].includes(title)) {
+  if (
+    ['slot', 'slots'].includes(anchorSection ?? '')
+    || ['插槽', 'slot', 'slots'].includes(title)
+  ) {
+    return 'slots'
+  }
+  if (
+    ['method', 'methods'].includes(anchorSection ?? '')
+    || ['方法', 'method', 'methods', 'common methods', 'static methods'].includes(title)
+  ) {
     return 'methods'
   }
 
@@ -281,9 +292,9 @@ function createUniqueColumnNames(columns: string[]): string[] {
   })
 }
 
-function parseMarkdownTables(markdown: string): MarkdownTableRow[] {
+function parseMarkdownTableGroups(markdown: string): MarkdownTableRow[][] {
   const lines = markdown.split(/\r?\n/)
-  const rows: MarkdownTableRow[] = []
+  const tables: MarkdownTableRow[][] = []
 
   for (let index = 0; index < lines.length - 1; index += 1) {
     const columns = splitMarkdownTableRow(lines[index]!)
@@ -294,6 +305,7 @@ function parseMarkdownTables(markdown: string): MarkdownTableRow[] {
     }
 
     const uniqueColumns = createUniqueColumnNames(columns)
+    const rows: MarkdownTableRow[] = []
     index += 2
 
     while (index < lines.length && lines[index]!.includes('|')) {
@@ -308,23 +320,114 @@ function parseMarkdownTables(markdown: string): MarkdownTableRow[] {
       index += 1
     }
 
+    if (rows.length > 0) {
+      tables.push(rows)
+    }
+
     index -= 1
   }
 
-  return rows
+  return tables
 }
 
 function createEmptyParsedApi(): ParsedApi {
   return {
     properties: [],
     events: [],
+    slots: [],
     methods: [],
+  }
+}
+
+function inferApiSectionName(rows: MarkdownTableRow[]): ApiSectionName {
+  const columns = new Set(
+    rows.flatMap(row => Object.keys(row).map(normalizeTableColumn)),
+  )
+
+  if (['event', 'eventname', 'events', '事件', '事件名'].some(column => columns.has(column))) {
+    return 'events'
+  }
+  if (['slot', 'slotname', 'slots', '插槽', '插槽名'].some(column => columns.has(column))) {
+    return 'slots'
+  }
+  if (['method', 'methodname', 'methods', '方法', '方法名'].some(column => columns.has(column))) {
+    return 'methods'
+  }
+
+  return 'properties'
+}
+
+function normalizeComponentIdentity(value: string): string {
+  return cleanSubComponentName(value)
+    .normalize('NFKC')
+    .replace(/[^\p{L}\p{N}]/gu, '')
+    .toLowerCase()
+}
+
+function createSubComponentKey(name: string): string {
+  return cleanSubComponentName(name)
+    .normalize('NFKC')
+    .replace(/[^\p{L}\p{N}_$-]/gu, '')
+}
+
+function isSemanticDomHeading(heading: MarkdownHeading): boolean {
+  const title = normalizeHeadingTitle(heading.title).replace(/[\s-]+/g, '')
+  return heading.anchor === 'semantic-dom'
+    || title === 'semanticdom'
+    || title === '语义化dom'
+}
+
+function isTypeDefinitionsHeading(
+  heading: MarkdownHeading,
+  apiHeadingLevel: number,
+): boolean {
+  const title = normalizeHeadingTitle(heading.title)
+  return heading.level === apiHeadingLevel
+    && (heading.anchor === 'types' || title === 'types' || title === '类型')
+}
+
+function isFallbackApiBoundary(heading: MarkdownHeading): boolean {
+  const title = normalizeHeadingTitle(heading.title).replace(/[\s-]+/g, '')
+  return heading.level === 2
+    && (
+      heading.anchor === 'design-token'
+      || heading.anchor === 'faq'
+      || ['designtoken', '设计令牌', '主题变量（designtoken）', 'faq', '常见问题'].includes(title)
+    )
+}
+
+function getDirectHeadingContent(
+  markdown: string,
+  headings: MarkdownHeading[],
+  headingIndex: number,
+  endOffset: number,
+): string {
+  const heading = headings[headingIndex]
+
+  if (!heading) {
+    return ''
+  }
+
+  const nextHeading = headings[headingIndex + 1]
+  return markdown
+    .slice(heading.contentStart, Math.min(nextHeading?.start ?? endOffset, endOffset))
+    .trim()
+}
+
+function appendMarkdownTables(
+  api: ParsedApi,
+  markdown: string,
+  sectionName?: ApiSectionName,
+): void {
+  for (const rows of parseMarkdownTableGroups(markdown)) {
+    api[sectionName ?? inferApiSectionName(rows)].push(...rows)
   }
 }
 
 function parseComponentApi(
   markdown: string,
   headings: MarkdownHeading[],
+  componentName: string,
 ): { props: ParsedApi, subComponents: ParsedSubComponent[] } {
   const props = createEmptyParsedApi()
   const subComponents: ParsedSubComponent[] = []
@@ -337,61 +440,103 @@ function parseComponentApi(
     return { props, subComponents }
   }
 
-  const apiEndIndex = headings.findIndex((heading, index) =>
-    index > apiIndex && heading.level <= 2,
+  const semanticDomIndex = headings.findIndex((heading, index) =>
+    index > apiIndex && isSemanticDomHeading(heading),
   )
-  const scopedEndIndex = apiEndIndex === -1 ? headings.length : apiEndIndex
+  const fallbackEndIndex = semanticDomIndex === -1
+    ? headings.findIndex((heading, index) => index > apiIndex && isFallbackApiBoundary(heading))
+    : -1
+  let scopedEndIndex = headings.length
+
+  if (semanticDomIndex !== -1) {
+    scopedEndIndex = semanticDomIndex
+  }
+  else if (fallbackEndIndex !== -1) {
+    scopedEndIndex = fallbackEndIndex
+  }
+  const scopedEndOffset = headings[scopedEndIndex]?.start ?? markdown.length
+  const componentIdentity = normalizeComponentIdentity(componentName)
+  const owners = new Map<number, {
+    heading: MarkdownHeading
+    root: boolean
+    subComponent?: ParsedSubComponent
+  }>()
+  const ancestors: number[] = []
+
+  appendMarkdownTables(
+    props,
+    getDirectHeadingContent(markdown, headings, apiIndex, scopedEndOffset),
+  )
+
+  function getOwnerApi(owner: NonNullable<ReturnType<typeof owners.get>>): ParsedApi {
+    if (owner.root) {
+      return props
+    }
+
+    if (!owner.subComponent) {
+      const matchKeys = [
+        normalizeComponentIdentity(owner.heading.title),
+        normalizeComponentIdentity(owner.heading.anchor),
+      ].filter(Boolean)
+
+      owner.subComponent = {
+        key: createSubComponentKey(owner.heading.title),
+        matchKeys: [...new Set(matchKeys)],
+        name: owner.heading.title,
+        props: createEmptyParsedApi(),
+      }
+      subComponents.push(owner.subComponent)
+    }
+
+    return owner.subComponent.props
+  }
 
   for (let index = apiIndex + 1; index < scopedEndIndex; index += 1) {
     const heading = headings[index]!
 
-    if (heading.level !== 3) {
-      continue
-    }
-
-    const directSectionName = getApiSectionName(heading)
-
-    if (directSectionName) {
-      props[directSectionName].push(
-        ...parseMarkdownTables(getHeadingContent(markdown, headings, index, 3)),
-      )
-      continue
-    }
-
-    const subComponentProps = createEmptyParsedApi()
-    const nextSiblingIndex = headings.findIndex((candidate, candidateIndex) =>
-      candidateIndex > index && candidate.level <= 3,
-    )
-    const subComponentEndIndex = nextSiblingIndex === -1
-      ? scopedEndIndex
-      : Math.min(nextSiblingIndex, scopedEndIndex)
-    let hasApiSections = false
-
-    for (let childIndex = index + 1; childIndex < subComponentEndIndex; childIndex += 1) {
-      const childHeading = headings[childIndex]!
-      const sectionName = childHeading.level === 4
-        ? getApiSectionName(childHeading)
-        : undefined
-
-      if (!sectionName) {
-        continue
+    if (isTypeDefinitionsHeading(heading, headings[apiIndex]!.level)) {
+      while (
+        index + 1 < scopedEndIndex
+        && headings[index + 1]!.level > heading.level
+      ) {
+        index += 1
       }
-
-      hasApiSections = true
-      subComponentProps[sectionName].push(
-        ...parseMarkdownTables(getHeadingContent(markdown, headings, childIndex, 4)),
-      )
-    }
-
-    if (!hasApiSections) {
+      ancestors.length = 0
       continue
     }
 
-    subComponents.push({
-      key: heading.anchor || normalizeHeadingTitle(heading.title),
-      name: heading.title,
-      props: subComponentProps,
-    })
+    while (
+      ancestors.length > 0
+      && headings[ancestors.at(-1)!]!.level >= heading.level
+    ) {
+      ancestors.pop()
+    }
+
+    const sectionName = getApiSectionName(heading)
+    const directContent = getDirectHeadingContent(markdown, headings, index, scopedEndOffset)
+
+    if (sectionName) {
+      const owner = [...ancestors]
+        .reverse()
+        .map(ancestorIndex => owners.get(ancestorIndex))
+        .find(Boolean)
+      appendMarkdownTables(owner ? getOwnerApi(owner) : props, directContent, sectionName)
+      ancestors.push(index)
+      continue
+    }
+
+    const headingIdentity = normalizeComponentIdentity(heading.title)
+    const owner = {
+      heading,
+      root: Boolean(componentIdentity && headingIdentity === componentIdentity),
+    }
+    owners.set(index, owner)
+
+    if (parseMarkdownTableGroups(directContent).length > 0) {
+      appendMarkdownTables(getOwnerApi(owner), directContent)
+    }
+
+    ancestors.push(index)
   }
 
   return { props, subComponents }
@@ -399,13 +544,18 @@ function parseComponentApi(
 
 function parseComponentDocument(markdown: string): ParsedComponentDocument {
   const headings = parseHeadings(markdown)
+  const frontmatter = parseFrontmatter(markdown)
   const whenToUseIndex = headings.findIndex(heading =>
     heading.level === 2 && heading.anchor === 'when-to-use',
   )
-  const { props, subComponents } = parseComponentApi(markdown, headings)
+  const { props, subComponents } = parseComponentApi(
+    markdown,
+    headings,
+    getFrontmatterField(frontmatter, 'name', 'title'),
+  )
 
   return {
-    frontmatter: parseFrontmatter(markdown),
+    frontmatter,
     whenToUse: whenToUseIndex === -1
       ? ''
       : getHeadingContent(markdown, headings, whenToUseIndex, 2),
@@ -442,14 +592,27 @@ function getTableRowName(row: MarkdownTableRow): string {
     'event',
     'event name',
     'events',
+    'slot',
+    'slot name',
+    'slots',
     'method',
     'method name',
     'methods',
+    'argument',
+    'argument name',
+    'arguments',
+    'parameter',
+    'parameter name',
+    'parameters',
     '名称',
     '属性',
     '属性名',
+    '参数',
+    '参数名',
     '事件',
     '事件名',
+    '插槽',
+    '插槽名',
     '方法',
     '方法名',
   ]).replace(/`/g, '').trim()
@@ -485,10 +648,9 @@ function mergeTableRows(
     zhRowsByName.set(name, rows)
   }
 
-  const records = enRows.map((enRow, index) => {
+  const records = enRows.map((enRow) => {
     const matchingRows = zhRowsByName.get(normalizeTableRowName(enRow))
     const zhRow = matchingRows?.find(row => !usedZhRows.has(row))
-      ?? (usedZhRows.has(zhRows[index]!) ? undefined : zhRows[index])
 
     if (zhRow) {
       usedZhRows.add(zhRow)
@@ -520,12 +682,20 @@ function mergeTableRows(
   return records
 }
 
-function flattenApi(en: ParsedApi, zh: ParsedApi): ComponentPropRecord[] {
-  return [
-    ...mergeTableRows(en.properties, zh.properties),
-    ...mergeTableRows(en.events, zh.events),
-    ...mergeTableRows(en.methods, zh.methods),
-  ]
+function localizeApi(en: ParsedApi, zh: ParsedApi): ComponentApiRecord {
+  return {
+    properties: mergeTableRows(en.properties, zh.properties),
+    events: mergeTableRows(en.events, zh.events),
+    slots: mergeTableRows(en.slots, zh.slots),
+    methods: mergeTableRows(en.methods, zh.methods),
+  }
+}
+
+function countApiItems(api: ComponentApiRecord): number {
+  return api.properties.length
+    + api.events.length
+    + api.slots.length
+    + api.methods.length
 }
 
 function cleanSubComponentName(name: string): string {
@@ -535,38 +705,59 @@ function cleanSubComponentName(name: string): string {
     .trim()
 }
 
-function createSubComponentRecord(
-  records: Record<string, ComponentPropRecord[]>,
-  subComponentName: string,
-  props: ComponentPropRecord[],
-): void {
-  for (const prop of props) {
-    const key = `${subComponentName}-${prop.name}`
-    const existingProps = records[key] ?? []
-    existingProps.push(prop)
-    records[key] = existingProps
+function mergeLocalizedApi(
+  current: ComponentApiRecord | undefined,
+  next: ComponentApiRecord,
+): ComponentApiRecord {
+  if (!current) {
+    return next
+  }
+
+  return {
+    properties: [...current.properties, ...next.properties],
+    events: [...current.events, ...next.events],
+    slots: [...current.slots, ...next.slots],
+    methods: [...current.methods, ...next.methods],
   }
 }
 
-function localizeSubComponents(
+function addSubComponentRecord(
+  records: Record<string, ComponentApiRecord>,
+  key: string,
+  props: ComponentApiRecord,
+): void {
+  records[key] = mergeLocalizedApi(records[key], props)
+}
+
+function localizeSubComponentProps(
   enSubComponents: ParsedSubComponent[],
   zhSubComponents: ParsedSubComponent[],
-): Record<string, ComponentPropRecord[]> {
-  const zhByKey = new Map(zhSubComponents.map(subComponent => [subComponent.key, subComponent]))
+): Record<string, ComponentApiRecord> {
+  const zhByMatchKey = new Map<string, ParsedSubComponent[]>()
   const usedZhComponents = new Set<ParsedSubComponent>()
-  const records: Record<string, ComponentPropRecord[]> = {}
+  const records: Record<string, ComponentApiRecord> = {}
 
-  for (const [index, enSubComponent] of enSubComponents.entries()) {
-    const zhSubComponent = zhByKey.get(enSubComponent.key) ?? zhSubComponents[index]
+  for (const zhSubComponent of zhSubComponents) {
+    for (const matchKey of zhSubComponent.matchKeys) {
+      const matches = zhByMatchKey.get(matchKey) ?? []
+      matches.push(zhSubComponent)
+      zhByMatchKey.set(matchKey, matches)
+    }
+  }
+
+  for (const enSubComponent of enSubComponents) {
+    const zhSubComponent = enSubComponent.matchKeys
+      .flatMap(matchKey => zhByMatchKey.get(matchKey) ?? [])
+      .find(subComponent => !usedZhComponents.has(subComponent))
 
     if (zhSubComponent) {
       usedZhComponents.add(zhSubComponent)
     }
 
-    createSubComponentRecord(
+    addSubComponentRecord(
       records,
-      cleanSubComponentName(enSubComponent.name),
-      flattenApi(enSubComponent.props, zhSubComponent?.props ?? createEmptyParsedApi()),
+      enSubComponent.key,
+      localizeApi(enSubComponent.props, zhSubComponent?.props ?? createEmptyParsedApi()),
     )
   }
 
@@ -575,14 +766,29 @@ function localizeSubComponents(
       continue
     }
 
-    createSubComponentRecord(
+    addSubComponentRecord(
       records,
-      cleanSubComponentName(zhSubComponent.name),
-      flattenApi(createEmptyParsedApi(), zhSubComponent.props),
+      zhSubComponent.key,
+      localizeApi(createEmptyParsedApi(), zhSubComponent.props),
     )
   }
 
   return records
+}
+
+export function extractLocalizedComponentApi(
+  enMarkdown: string,
+  zhMarkdown: string,
+): Pick<ComponentRecord, 'props' | 'subComponents' | 'subComponentProps'> {
+  const en = parseComponentDocument(enMarkdown)
+  const zh = parseComponentDocument(zhMarkdown)
+  const subComponentProps = localizeSubComponentProps(en.subComponents, zh.subComponents)
+
+  return {
+    props: localizeApi(en.props, zh.props),
+    subComponents: Object.keys(subComponentProps),
+    subComponentProps,
+  }
 }
 
 function parseFaq(markdown: string): ComponentFaqRecord[] {
@@ -661,6 +867,7 @@ async function readComponent(
     readDemos(directory, enMarkdown, zhMarkdown),
     readSemanticStructure(directory),
   ])
+  const subComponentProps = localizeSubComponentProps(en.subComponents, zh.subComponents)
   const component = {
     name,
     nameZh: getFrontmatterField(zh.frontmatter, 'subtitle'),
@@ -672,17 +879,20 @@ async function readComponent(
     whenToUseZh: zh.whenToUse,
     doc: enMarkdown,
     docZh: zhMarkdown,
-    subComponents: localizeSubComponents(en.subComponents, zh.subComponents),
-    props: flattenApi(en.props, zh.props),
+    subComponents: Object.keys(subComponentProps),
+    subComponentProps,
+    props: localizeApi(en.props, zh.props),
     tokens: getComponentTokens(name, tokenMeta, tokenDefaults),
     faq: parseFaq(enMarkdown),
     demos,
     semanticStructure,
   }
+  const subComponentApiItemCount = Object.values(component.subComponentProps)
+    .reduce((count, api) => count + countApiItems(api), 0)
 
   logStep(
     componentScope,
-    `Parsed ${component.props.length} props, ${component.tokens.length} tokens, ${component.faq.length} FAQs, ${component.demos.length} demos and ${component.semanticStructure.length} semantic structures`,
+    `Parsed ${countApiItems(component.props)} root API items and ${subComponentApiItemCount} API items across ${component.subComponents.length} subcomponents, ${component.tokens.length} tokens, ${component.faq.length} FAQs, ${component.demos.length} demos and ${component.semanticStructure.length} semantic structures`,
   )
 
   return component
@@ -1370,11 +1580,15 @@ async function main(): Promise<void> {
   )
 }
 
-try {
-  await main()
-}
-catch (error) {
-  logSection('Synchronization failed')
-  logStep('sync', error instanceof Error ? error.message : String(error))
-  throw error
+const entryFile = process.argv[1]
+
+if (entryFile && import.meta.url === pathToFileURL(entryFile).href) {
+  try {
+    await main()
+  }
+  catch (error) {
+    logSection('Synchronization failed')
+    logStep('sync', error instanceof Error ? error.message : String(error))
+    throw error
+  }
 }
