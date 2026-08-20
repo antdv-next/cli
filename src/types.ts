@@ -4,6 +4,7 @@ export interface ResolvedConfig {
   cwd: string
   format: OutputFormat
   version: string
+  component: string
 }
 
 export interface PackageInfo {

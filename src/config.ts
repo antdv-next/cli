@@ -6,5 +6,6 @@ export const resolveConfig = (options: OptionsArgs): ResolvedConfig => {
     cwd: options.cwd,
     format: options.format,
     version: options.ver,
+    component: options.component ?? '',
   }
 }
