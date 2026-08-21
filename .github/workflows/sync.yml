@@ -77,6 +77,9 @@ jobs:
         if: always()
         run: rm -rf antdv-source
 
+      - name: Lint
+        run: pnpm run lint:fix
+
       - name: Commit data changes
         run: |
           git config user.name "github-actions[bot]"
