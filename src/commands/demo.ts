@@ -1,5 +1,6 @@
 import type { ComponentDemoRecord } from '#/components.ts'
 import type { OptionsArgs } from '@/args/args'
+import type { ResolvedVersion } from '@/types.ts'
 import { defineCommand } from 'citty'
 import { defaultArgs } from '@/args/default.ts'
 import { demoArgs } from '@/args/demo.ts'
@@ -9,7 +10,7 @@ import { logErrorComponent } from '@/utils/error.ts'
 import { loadVersionMetaData } from '@/utils/loader.ts'
 import { resolveVersion } from '@/utils/version.ts'
 
-function outputDemoContent(demo: Record<string, ComponentDemoRecord>, args: OptionsArgs): object | string {
+export function outputDemoContent(demo: Record<string, ComponentDemoRecord>, args: OptionsArgs): object | string {
   const component = capitalize(args.component!)
   switch (args.format) {
     case 'json':
@@ -43,7 +44,7 @@ function outputDemoContent(demo: Record<string, ComponentDemoRecord>, args: Opti
   }
 }
 
-function outputDemoCode(demo: ComponentDemoRecord, args: OptionsArgs): string {
+export function outputDemoCode(demo: ComponentDemoRecord, args: OptionsArgs): string {
   const component = capitalize(args.component!)
   switch (args.format) {
     case 'json':
@@ -74,6 +75,20 @@ function outputDemoCode(demo: ComponentDemoRecord, args: OptionsArgs): string {
   }
 }
 
+export async function getComponentDemo(component: string, version: ResolvedVersion): Promise<Record<string, ComponentDemoRecord>> {
+  const metaData = await loadVersionMetaData(version)
+  const components = metaData.components.filter(c => c.name === capitalize(component)).at(-1)
+
+  if (!components) {
+    throw new Error(`Error: Component ${component} not found`)
+  }
+
+  return components?.demos.reduce((acc, cur) => ({
+    ...acc,
+    [cur.name]: cur,
+  }), {}) as Record<string, ComponentDemoRecord>
+}
+
 export default defineCommand({
   meta: {
     name: 'demo',
@@ -87,18 +102,7 @@ export default defineCommand({
     const config = resolveConfig(args)
     try {
       const version = await resolveVersion(config)
-      const metaData = await loadVersionMetaData(version)
-      const components = metaData.components.filter(c => c.name === capitalize(args.component)).at(-1)
-
-      if (!components) {
-        console.log(`Error: Component ${args.component} not found`)
-        return ''
-      }
-
-      const demos = components?.demos.reduce((acc, cur) => ({
-        ...acc,
-        [cur.name]: cur,
-      }), {}) as Record<string, ComponentDemoRecord> ?? {}
+      const demos = await getComponentDemo(args.component, version)
 
       if (!Object.keys(demos).length) {
         console.log(`Error: Demo not found for ${capitalize(args.component)} v${version.version}`)
