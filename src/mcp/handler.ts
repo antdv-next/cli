@@ -24,7 +24,7 @@ const antdvDemoHandler = async (ctx: Readonly<handlerContext>, params: {
   const demo = await getComponentDemo(params.component, ctx.version)
   return {
     component: params.component,
-    demo,
+    demo: params.name ? demo[params.name] : demo,
   }
 }
 
