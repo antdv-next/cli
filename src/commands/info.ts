@@ -13,7 +13,16 @@ import { loadComponent, loadVersionMetaData } from '@/utils/loader.ts'
 import { output } from '@/utils/output.ts'
 import { resolveVersion } from '@/utils/version.ts'
 
-const COMMAND_ANCHOR_FIELDS = ['properties', 'events', 'slots', 'methods'] as (keyof ComponentApiRecord)[]
+type ApiField = keyof ComponentApiRecord
+
+const COMMAND_ANCHOR_FIELDS = ['properties', 'events', 'slots', 'methods'] as const satisfies readonly ApiField[]
+const API_FIELD_LABELS = {
+  properties: 'Property',
+  events: 'Event',
+  slots: 'Slot',
+  methods: 'Method',
+} satisfies Record<ApiField, string>
+
 const COMMON_PROPS: ComponentApiItemRecord[] = [
   {
     name: 'style',
@@ -54,105 +63,76 @@ function outputJson(component: ComponentRecord): object {
   }
 }
 
-function outputTextTableOrMarkdown(component: ComponentRecord, type: OutputFormat): string {
-  let content = ''
-
-  const optimizeTableRender = (props: Record<keyof ComponentApiRecord, ComponentApiItemRecord[]>, anchor: keyof ComponentApiRecord): string => {
-    if (type === 'text') {
-      const p = new Table({
-        style: tableBorderStyle,
-        columns: [
-          { name: capitalize(anchor), alignment: 'left' },
-          { name: 'Type', alignment: 'left' },
-          { name: 'Default', alignment: 'left' },
-          { name: 'Description', alignment: 'left' },
-        ],
-      })
-
-      props[anchor].forEach((prop) => {
-        p.addRow({
-          [capitalize(anchor)]: prop.name,
-          Type: prop.type,
-          Default: prop.default,
-          Description: prop.descriptionZh,
-        })
-      })
-
-      return p.render()
-    }
-
-    let markdown = '\n'
-    markdown += `| ${capitalize(anchor)} | Type | Default | Since |\n`
-    markdown += '| --- | --- | --- | --- |\n'
-
-    props[anchor].forEach((prop) => {
-      markdown += `| ${prop.name} | ${prop.type} | ${prop.default} | ${prop.descriptionZh} |
-`
-    })
-
-    return markdown
-  }
-
-  COMMAND_ANCHOR_FIELDS.forEach((anchor: keyof ComponentApiRecord) => {
-    if (!component.props[anchor].length) {
-      return ''
-    }
-
-    content += optimizeTableRender(component.props, anchor)
+function renderTextTable(items: ComponentApiItemRecord[], field: ApiField): string {
+  const fieldLabel = API_FIELD_LABELS[field]
+  const table = new Table({
+    style: tableBorderStyle,
+    columns: [
+      { name: fieldLabel, alignment: 'left' },
+      { name: 'Type', alignment: 'left' },
+      { name: 'Default', alignment: 'left' },
+      { name: 'Description', alignment: 'left' },
+    ],
   })
 
-  if (component.subComponents.length) {
-    component.subComponents.forEach((subComponent) => {
-      content += `\n${subComponent}\n`
-
-      COMMAND_ANCHOR_FIELDS.forEach((anchor: keyof ComponentApiRecord) => {
-        const subProps = component.subComponentProps[subComponent]!
-        if (!subProps[anchor].length) {
-          return ''
-        }
-
-        content += optimizeTableRender(subProps, anchor)
-      })
+  for (const item of items) {
+    table.addRow({
+      [fieldLabel]: item.name,
+      Type: item.type,
+      Default: item.default,
+      Description: item.descriptionZh || item.description,
     })
   }
 
-  if (component.commonProps) {
-    if (type === 'text') {
-      content += '\n通用属性（所有组件均支持，无需单独列出）\n'
-      const p = new Table({
-        style: tableBorderStyle,
-        columns: [
-          { name: 'Property', alignment: 'left' },
-          { name: 'Type', alignment: 'left' },
-          { name: 'Default', alignment: 'left' },
-          { name: 'Description', alignment: 'left' },
-        ],
-      })
+  return table.render()
+}
 
-      component.commonProps.forEach((prop) => {
-        p.addRow({
-          Property: prop.name,
-          Type: prop.type,
-          Default: prop.default,
-          Description: prop.descriptionZh,
-        })
-      })
+function renderMarkdownTable(items: ComponentApiItemRecord[], field: ApiField): string {
+  const rows = items.map((item) => {
+    const description = item.descriptionZh || item.description
+    return `| ${item.name} | ${item.type} | ${item.default} | ${description} |`
+  })
 
-      content += p.render()
+  return [
+    `| ${API_FIELD_LABELS[field]} | Type | Default | Description |`,
+    '| --- | --- | --- | --- |',
+    ...rows,
+  ].join('\n')
+}
+
+function renderApiTables(props: ComponentApiRecord, type: OutputFormat): string {
+  return COMMAND_ANCHOR_FIELDS
+    .filter(field => props[field].length)
+    .map((field) => {
+      return type === 'text'
+        ? renderTextTable(props[field], field)
+        : renderMarkdownTable(props[field], field)
+    })
+    .join('\n')
+}
+
+function outputTextTableOrMarkdown(component: ComponentRecord, type: OutputFormat): string {
+  const sections = [renderApiTables(component.props, type)]
+
+  for (const subComponent of component.subComponents) {
+    const props = component.subComponentProps[subComponent]
+    if (!props) {
+      continue
     }
 
-    if (type === 'markdown') {
-      content += '\n通用属性（所有组件均支持，无需单独列出）\n\n'
-      content += `| Property | Type | Default | Description |\n`
-      content += '| --- | --- | --- | --- |\n'
-
-      component.commonProps.forEach((prop) => {
-        content += `| ${prop.name} | ${prop.type} | ${prop.default} | ${prop.descriptionZh} |`
-      })
-    }
+    sections.push(`\n${subComponent}\n`, renderApiTables(props, type))
   }
 
-  return content
+  if (component.commonProps?.length) {
+    const commonPropsTitle = '\n通用属性（所有组件均支持，无需单独列出）\n'
+    const commonPropsTable = type === 'text'
+      ? renderTextTable(component.commonProps, 'properties')
+      : renderMarkdownTable(component.commonProps, 'properties')
+
+    sections.push(commonPropsTitle, commonPropsTable)
+  }
+
+  return sections.filter(Boolean).join(type === 'markdown' ? '\n\n' : '')
 }
 
 const COMMON_PROPS_EXCLUDED = new Set(['ConfigProvider'])
@@ -183,7 +163,9 @@ export default defineCommand({
       const version = await resolveVersion(config)
       const component = await getComponentInfo(config.component, version)
 
-      console.log(`${capitalize(config.component)} (${component.nameZh}) — ${component.description}`)
+      if (args.format !== 'json') {
+        console.log(`${capitalize(config.component)} (${component.nameZh}) — ${component.description}`)
+      }
 
       output({
         json: outputJson(component),
