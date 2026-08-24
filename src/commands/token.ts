@@ -1,4 +1,5 @@
 import type { ComponentPropRecord } from '#/components.ts'
+import type { ResolvedVersion } from '@/types.ts'
 import { defineCommand } from 'citty'
 import { Table } from 'console-table-printer'
 import { componentArgs } from '@/args/component.ts'
@@ -38,6 +39,20 @@ function outputTokenMarkdown(tokens: ComponentPropRecord[]): string {
   return content
 }
 
+export async function getComponentToken(component: string, version: ResolvedVersion): Promise<ComponentPropRecord[]> {
+  const metaData = await loadVersionMetaData(version)
+  if (!component) {
+    return metaData.globalTokens
+  }
+
+  const components = metaData.components.filter(c => c.name === capitalize(component))
+  if (!components.length) {
+    throw new Error(`Component ${component} not found`)
+  }
+
+  return components.at(-1)?.tokens ?? []
+}
+
 export default defineCommand({
   meta: {
     name: 'token',
@@ -51,20 +66,12 @@ export default defineCommand({
     const config = resolveConfig(args)
     try {
       const version = await resolveVersion(config)
-
-      const metaData = await loadVersionMetaData(version)
+      const tokens = await getComponentToken(args.component, version)
 
       if (args.component) {
-        const components = metaData.components.filter(c => c.name === capitalize(args.component))
-        if (!components.length) {
-          logErrorComponent(args)
-          return ''
-        }
-
         if (args.format !== 'json') {
           console.log(`${capitalize(args.component)} Component Tokens:`)
         }
-        const tokens = components.at(-1)?.tokens ?? []
         output({
           json: { token: tokens },
           text: outputTokenTable(tokens),
@@ -75,9 +82,9 @@ export default defineCommand({
       }
 
       output({
-        json: { token: metaData.globalTokens },
-        text: outputTokenTable(metaData.globalTokens),
-        markdown: outputTokenMarkdown(metaData.globalTokens),
+        json: { token: tokens },
+        text: outputTokenTable(tokens),
+        markdown: outputTokenMarkdown(tokens),
       }, args.format)
     }
 
