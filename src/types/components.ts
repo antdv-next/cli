@@ -74,4 +74,5 @@ export interface ComponentRecord {
   faq: ComponentFaqRecord[]
   demos: ComponentDemoRecord[]
   semanticStructure: ComponentSemanticStructureRecord[]
+  commonProps?: ComponentApiItemRecord[]
 }
