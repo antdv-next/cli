@@ -137,7 +137,7 @@ function outputTextTableOrMarkdown(component: ComponentRecord, type: OutputForma
 
 const COMMON_PROPS_EXCLUDED = new Set(['ConfigProvider'])
 
-async function getComponentInfo(name: string, version: ResolvedVersion): Promise<ComponentRecord> {
+export async function getComponentInfo(name: string, version: ResolvedVersion): Promise<ComponentRecord> {
   const component = loadComponent(name, await loadVersionMetaData(version))
 
   const commonProps = COMMON_PROPS_EXCLUDED.has(component.name) ? undefined : COMMON_PROPS
