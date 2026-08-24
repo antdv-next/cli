@@ -1,4 +1,5 @@
 import type { ComponentSemanticStructureRecord } from '#/components.ts'
+import type { ResolvedVersion } from '@/types.ts'
 import { defineCommand } from 'citty'
 import { componentArgs } from '@/args/component.ts'
 import { defaultArgs } from '@/args/default.ts'
@@ -34,6 +35,12 @@ function outputMarkdownSemantic(component: string, semantic: ComponentSemanticSt
   ].join('\n')
 }
 
+export async function getComponentSemantic(component: string, version: ResolvedVersion): Promise<ComponentSemanticStructureRecord[]> {
+  const metaData = loadComponent(component, await loadVersionMetaData(version))
+
+  return metaData.semanticStructure ?? []
+}
+
 export default defineCommand({
   meta: {
     name: 'semantic',
@@ -49,9 +56,7 @@ export default defineCommand({
 
     try {
       const version = await resolveVersion(config)
-      const metaData = loadComponent(component, await loadVersionMetaData(version))
-
-      const semantic = metaData.semanticStructure
+      const semantic = await getComponentSemantic(component, version)
 
       if (!semantic.length) {
         console.log(`No semantic structure data available for ${capitalize(component)}.`)
