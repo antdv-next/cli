@@ -5,6 +5,10 @@ import { defineCommand } from 'citty'
 import { defaultArgs } from '@/args/default.ts'
 import { getDataPath } from '@/utils/loader.ts'
 
+export async function getDesignMarkdown(): Promise<string> {
+  return await readFile(join(getDataPath(), 'design.md'), 'utf-8')
+}
+
 export default defineCommand({
   meta: {
     name: 'design.md',
@@ -12,7 +16,7 @@ export default defineCommand({
   },
   args: defaultArgs,
   async run({ args }) {
-    const doc = await readFile(join(getDataPath(), 'design.md'), 'utf-8')
+    const doc = await getDesignMarkdown()
 
     if (args.format === 'json') {
       console.log(JSON.stringify({ doc }, null, 2))
