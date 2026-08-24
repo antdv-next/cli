@@ -62,6 +62,7 @@
   "devDependencies": {
     "@antfu/eslint-config": "^9.3.0",
     "@lonewolfyx/tsconfig": "^0.0.6",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@types/node": "^26.2.0",
     "@types/semver": "^7.8.0",
     "dayjs": "^1.11.21",
@@ -76,7 +77,8 @@
     "tsx": "^4.23.12",
     "typescript": "^6.0.3",
     "verify-git-commit": "^0.0.1",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "zod": "^4.4.3"
   },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged",
