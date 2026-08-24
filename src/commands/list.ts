@@ -1,4 +1,4 @@
-import type { ComponentRecord } from '#/components.ts'
+import type { ComponentDemoRecord, ComponentRecord } from '#/components.ts'
 import { defineCommand } from 'citty'
 import { Table } from 'console-table-printer'
 import { defaultArgs } from '@/args/default.ts'
@@ -40,6 +40,17 @@ function outputTable(components: ComponentRecord[]): string {
   return p.render()
 }
 
+export function outputJson(components: ComponentRecord[]): Omit<ComponentDemoRecord, 'titleZh' | 'code'>[] {
+  return components.map((component) => {
+    return {
+      name: component.name,
+      title: component.nameZh,
+      description: component.description,
+      descriptionZh: component.descriptionZh,
+    }
+  })
+}
+
 export default defineCommand({
   meta: {
     name: 'list',
@@ -55,7 +66,7 @@ export default defineCommand({
 
     output({
       text: outputTable(components),
-      json: components,
+      json: outputJson(components),
       markdown: outputMarkdown(components),
     }, args.format)
   },
