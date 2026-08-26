@@ -1,10 +1,14 @@
 import type { OutputFormat } from '@/args/default.ts'
+import type { clientOption, modeOption } from '@/args/setup.ts'
 
 export interface ResolvedConfig {
   cwd: string
   format: OutputFormat
   version: string
   component: string
+  mode?: modeOption
+  client?: clientOption
+  writeInstructions?: boolean
 }
 
 export interface PackageInfo {
@@ -46,4 +50,9 @@ export interface AntdvIssueFields {
 export interface ResolvedVersion {
   version: string
   majorVersion: `v${number}`
+}
+
+export interface CliError {
+  message: string
+  suggestion?: string
 }
