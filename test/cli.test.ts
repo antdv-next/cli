@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises'
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
+import { version } from '../package.json' with { type: 'json' }
 import { createMockDir, genPath, run } from './run'
 
 beforeEach(async () => await createMockDir())
@@ -12,6 +13,6 @@ describe('cli', () => {
   it('run antdv command', async () => {
     const { stdout } = await run()
 
-    expect(stdout).toContain('@antdv-next/cli v0.0.0')
+    expect(stdout).toContain(`@antdv-next/cli v${version}`)
   })
 })

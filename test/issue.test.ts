@@ -1,6 +1,7 @@
 import type { ResolvedAntdvVersionEnv } from '../src/types'
 import process from 'node:process'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { version as cliVersion } from '../package.json' with { type: 'json' }
 import { buildIssueUrl, collectAntdvEnv, createIssueBody } from '../src/utils/issue'
 
 const mocks = vi.hoisted(() => ({
@@ -72,7 +73,7 @@ describe('collectAntdvEnv', () => {
         bun: '1.2.21',
       },
       system: 'test-platform test-release',
-      cli: '0.0.0',
+      cli: cliVersion,
     })
 
     expect(mocks.getInstalledPackageVersion).toHaveBeenNthCalledWith(1, '/project', 'antdv-next')
