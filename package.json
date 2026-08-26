@@ -30,7 +30,8 @@
   },
   "files": [
     "data",
-    "dist"
+    "dist",
+    "skills"
   ],
   "scripts": {
     "dev": "tsdown --watch",
