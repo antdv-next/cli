@@ -6,6 +6,15 @@ export interface ResolvedConfig {
   format: OutputFormat
   version: string
   component: string
+
+  title?: string
+  reproduction?: string
+  steps?: string
+  expected?: string
+  actual?: string
+  extra?: string
+  submit?: boolean
+
   mode?: modeOption
   client?: clientOption
   writeInstructions?: boolean

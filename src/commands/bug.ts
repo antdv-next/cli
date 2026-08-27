@@ -1,40 +1,41 @@
-import type { ParsedArgs } from 'citty'
+import type { ResolvedConfig } from '@/types.ts'
 import { defineCommand } from 'citty'
 import { bugArgs } from '@/args/bug.ts'
 import { defaultArgs } from '@/args/default.ts'
+import { resolveConfig } from '@/config.ts'
 import { ANTDV_REPO } from '@/constants/repo.ts'
 import { isUrl } from '@/utils/is.ts'
 import { buildIssueUrl, collectAntdvEnv, createIssueBody } from '@/utils/issue.ts'
 import { output } from '@/utils/output.ts'
 
-export async function createBug(repo: string, args: ParsedArgs<typeof defaultArgs> & ParsedArgs<typeof bugArgs>): Promise<void> {
-  const env = await collectAntdvEnv(args.cwd)
+export async function createBug(repo: string, config: ResolvedConfig): Promise<void> {
+  const env = await collectAntdvEnv(config.cwd)
 
-  if (args.reproduction.length > 1 && !isUrl(args.reproduction)) {
+  if (config.reproduction!.length > 1 && !isUrl(config.reproduction!)) {
     console.log('Please provide a valid URL for the reproduction link.')
     process.exit(1)
   }
 
   const body = createIssueBody({
-    reproduction: args.reproduction,
-    steps: args.steps,
-    expected: args.expected,
-    actual: args.actual,
-    extra: args.extra,
+    reproduction: config.reproduction || '',
+    steps: config.steps || '',
+    expected: config.expected || '',
+    actual: config.actual || '',
+    extra: config.extra || '',
     env,
   })
 
-  const url = buildIssueUrl(args.title, repo, body)
+  const url = buildIssueUrl(config.title || '', repo, body)
 
   output({
     json: {
       repo,
-      title: args.title,
+      title: config.title,
       body,
       url,
     },
     text: `Repository: ${repo}
-Title: ${args.title}
+Title: ${config.title!}
 
 --- Issue Body ---
 ${body}
@@ -42,7 +43,7 @@ ${body}
 
 To submit, re-run with --submit flag.\n`,
     markdown: body,
-  }, args.format)
+  }, config.format)
 }
 
 export default defineCommand({
@@ -55,6 +56,14 @@ export default defineCommand({
     ...bugArgs,
   },
   async run({ args }) {
-    await createBug(ANTDV_REPO, args)
+    const config = resolveConfig(args)
+    config.title = args.title
+    config.reproduction = args.reproduction
+    config.steps = args.steps
+    config.expected = args.expected
+    config.actual = args.actual
+    config.extra = args.extra
+    config.submit = args.submit
+    await createBug(ANTDV_REPO, config)
   },
 })
