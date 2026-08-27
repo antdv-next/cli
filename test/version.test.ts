@@ -23,6 +23,12 @@ function createConfig(version = '', cwd = '/project'): ResolvedConfig {
 beforeEach(async () => {
   mockedGetPackageInfo.mockReset()
   await mkdir(dataPath, { recursive: true })
+  await Promise.all([
+    writeFile(join(dataPath, 'v1.2.3.json'), '{}'),
+    writeFile(join(dataPath, 'v1.5.1.json'), '{}'),
+    writeFile(join(dataPath, 'v1.5.2.json'), '{}'),
+    writeFile(join(dataPath, 'v1.json'), '{}'),
+  ])
 })
 
 afterEach(async () => {
@@ -31,15 +37,31 @@ afterEach(async () => {
 
 describe('resolveVersion', () => {
   it('resolves and normalizes an explicitly provided version', async () => {
-    await expect(resolveVersion(createConfig(' v1.2.3 '))).resolves.toEqual({
+    await expect(resolveVersion(createConfig(' v1.2.3 '), dataPath)).resolves.toEqual({
       version: '1.2.3',
       majorVersion: 'v1',
     })
     expect(mockedGetPackageInfo).not.toHaveBeenCalled()
   })
 
+  it('resolves a missing patch to the greatest version in the same minor', async () => {
+    await expect(resolveVersion(createConfig('v1.5.4'), dataPath)).resolves.toEqual({
+      version: '1.5.2',
+      majorVersion: 'v1',
+    })
+    expect(mockedGetPackageInfo).not.toHaveBeenCalled()
+  })
+
+  it('resolves a missing minor to the latest version in the same major', async () => {
+    await expect(resolveVersion(createConfig('v1.6.0'), dataPath)).resolves.toEqual({
+      version: '1.5.2',
+      majorVersion: 'v1',
+    })
+    expect(mockedGetPackageInfo).not.toHaveBeenCalled()
+  })
+
   it('returns an empty sentinel when an explicit version cannot be coerced', async () => {
-    await expect(resolveVersion(createConfig('latest'))).resolves.toEqual({
+    await expect(resolveVersion(createConfig('latest'), dataPath)).resolves.toEqual({
       version: '',
       majorVersion: 'v0',
     })
@@ -55,7 +77,7 @@ describe('resolveVersion', () => {
       packageJson: {},
     })
 
-    await expect(resolveVersion(createConfig())).resolves.toEqual({
+    await expect(resolveVersion(createConfig(), dataPath)).resolves.toEqual({
       version: '2.4.1',
       majorVersion: 'v2',
     })
@@ -82,6 +104,8 @@ describe('resolveFallBack', () => {
   })
 
   it('throws when the data directory has no valid version files', async () => {
+    await rm(dataPath, { recursive: true })
+    await mkdir(dataPath)
     await writeFile(join(dataPath, 'version.json'), '{}')
 
     await expect(resolveFallBack(dataPath)).rejects.toThrow(
