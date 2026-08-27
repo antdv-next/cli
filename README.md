@@ -101,7 +101,7 @@ antdv demo Select basic                      # 可运行的 Demo 源码
 antdv token DatePicker                       # Design Token 值（v5+）
 antdv design.md                              # 设计语言文档（design.md）
 antdv semantic Table                         # classNames / styles 结构
-antdv changelog 1.0.0 1.5.1 Select           # 跨版本 API 差异对比
+antdv changelog 1.0.5 1.5.2 Select           # 跨版本 API 差异对比
 antdv doctor                                 # 诊断项目配置问题
 antdv env                                    # 收集环境信息用于 Bug 报告
 antdv usage ./src                            # 分析项目中的 antd 导入
