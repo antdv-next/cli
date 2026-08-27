@@ -103,16 +103,16 @@ antdv lint ./src --only a11y --format json
 antdv lint ./src --only performance --format json
 ```
 
-### 5. Checking changelogs and version history
+### 5. Comparing component APIs between versions
 
-When the user asks about what changed in a version:
+When the user asks what component APIs changed between versions:
 
 ```bash
-# Specific version changelog
-antdv changelog --format json
+# Compare props, events, slots, and methods for all components
+antdv changelog 1.2.2 1.5.2 --format json
 
-# Version range (both ends inclusive)
-antvd changelog 1.2.0..1.5.0 --format json
+# Limit the comparison to one component
+antdv changelog 1.2.2 1.5.2 Select --format json
 ```
 
 ### 6. Exploring available components
