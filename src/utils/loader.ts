@@ -9,13 +9,15 @@ export function getDataPath(): string {
   return join(__dirname, '..', 'data')
 }
 
-export async function loadVersionMetaData(version: ResolvedVersion): Promise<ChangelogFile> {
-  const versionsPath = join(getDataPath(), 'versions.json')
-  const versionsIndex = JSON.parse(await readFile(versionsPath, 'utf-8'))
-  if (!Object.values(versionsIndex[version.majorVersion]).includes(version.version)) {
+export async function loadVersionMetaData(version: ResolvedVersion, dataPath = getDataPath()): Promise<ChangelogFile> {
+  const versionsPath = join(dataPath, 'versions.json')
+  const versionsIndex = JSON.parse(await readFile(versionsPath, 'utf-8')) as Record<string, Record<string, string>>
+  const majorVersions = versionsIndex[version.majorVersion]
+
+  if (!majorVersions || !Object.values(majorVersions).includes(version.version)) {
     throw new Error(`v${version.version} not found`)
   }
-  return JSON.parse(await readFile(join(getDataPath(), `v${version.version}.json`), 'utf-8')) as ChangelogFile
+  return JSON.parse(await readFile(join(dataPath, `v${version.version}.json`), 'utf-8')) as ChangelogFile
 }
 
 export function loadComponent(name: string, components: ChangelogFile): ComponentRecord {
