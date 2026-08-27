@@ -1,7 +1,7 @@
 {
   "name": "@antdv-next/cli",
   "type": "module",
-  "version": "0.0.0-beta.2",
+  "version": "0.0.0-beta.3",
   "packageManager": "pnpm@11.9.0",
   "description": "CLI tool for querying antdv-next knowledge and analyzing antdv-next usage in projects",
   "license": "MIT",
