@@ -1,4 +1,5 @@
 import type { AntdvToolStrategyRegistry, handlerContext } from '@/mcp/tools.ts'
+import process from 'node:process'
 import { getComponentDemo } from '@/commands/demo.ts'
 import { getDesignMarkdown } from '@/commands/design.ts'
 import { getComponentDocument } from '@/commands/doc.ts'
@@ -6,7 +7,9 @@ import { getComponentInfo } from '@/commands/info.ts'
 import { outputJson as outputComponentListJson } from '@/commands/list.ts'
 import { getComponentSemantic } from '@/commands/semantic.ts'
 import { getComponentToken } from '@/commands/token.ts'
+import { diffComponent } from '@/utils/api-diff.ts'
 import { loadVersionMetaData } from '@/utils/loader.ts'
+import { resolveVersion } from '@/utils/version.ts'
 
 const antdvListHandler = async (ctx: Readonly<handlerContext>, params: Record<string, unknown>): Promise<any> => {
   const metaData = await loadVersionMetaData(ctx.version)
@@ -54,6 +57,23 @@ const antdvDesignMdHandler = async (ctx: Readonly<handlerContext>, params: Recor
   }
 }
 
+const antdvChangelogHandler = async (ctx: Readonly<handlerContext>, params: Record<string, string>): Promise<any> => {
+  const v1 = await resolveVersion({
+    cwd: process.cwd(),
+    format: 'json',
+    component: params.component || '',
+    version: params.from || '',
+  })
+  const v2 = await resolveVersion({
+    cwd: process.cwd(),
+    format: 'json',
+    component: params.component || '',
+    version: params.to || '',
+  })
+
+  return await diffComponent(v1, v2, params.component)
+}
+
 export default {
   antdv_list: antdvListHandler,
   antdv_info: antdvInfoHandler,
@@ -62,4 +82,5 @@ export default {
   antdv_semantic: antdvSemanticHandler,
   antdv_doc: antdvDocHandler,
   antdv_design_md: antdvDesignMdHandler,
+  antdv_changelog: antdvChangelogHandler,
 } as AntdvToolStrategyRegistry

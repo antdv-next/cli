@@ -69,6 +69,16 @@ export const antdvMcpToolDefinitions = [
     inputSchema: z.object({}).strict(),
     annotations: readOnlyAnnotations,
   },
+  {
+    name: 'antdv_changelog',
+    description: 'Obtain the changelog of the target main version',
+    inputSchema: z.object({
+      from: z.string().trim().describe('Source antdv-next version (e.g. 1.0.5)'),
+      to: z.string().trim().describe('Target antdv-next version (e.g. 1.5.2)'),
+      component: z.string().optional().describe('Component name (e.g. Button, Table)'),
+    }).strict(),
+    annotations: readOnlyAnnotations,
+  },
 ] as const
 
 export type AntdvMcpToolName = typeof antdvMcpToolDefinitions[number]['name']
