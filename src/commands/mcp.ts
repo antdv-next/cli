@@ -1,8 +1,7 @@
 import type { ResolvedVersion } from '@/types.ts'
 import process from 'node:process'
-import { Server } from '@modelcontextprotocol/sdk/server/index.js'
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import { CallToolRequestSchema, ErrorCode, ListToolsRequestSchema, McpError } from '@modelcontextprotocol/sdk/types.js'
 import { defineCommand } from 'citty'
 import { defaultArgs } from '@/args/default.ts'
 import { resolveConfig } from '@/config.ts'
@@ -10,8 +9,8 @@ import toolsHandler from '@/mcp/handler.ts'
 import { antdvMcpToolDefinitions, createAntdvToolHandler } from '@/mcp/tools.ts'
 import { resolveVersion } from '@/utils/version.ts'
 
-function createAntdvMcpServer(version: ResolvedVersion): Server {
-  const server = new Server(
+function createAntdvMcpServer(version: ResolvedVersion): McpServer {
+  const server = new McpServer(
     {
       name: 'antdv-mcp',
       version: __CLI_VERSION__,
@@ -24,20 +23,18 @@ function createAntdvMcpServer(version: ResolvedVersion): Server {
     },
   )
 
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: antdvMcpToolDefinitions,
-  }))
-
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const { name, arguments: params } = request.params
-    const handler = createAntdvToolHandler({ version }, toolsHandler)
-
-    if (!handler) {
-      throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${request.params.name}`)
-    }
-
-    return await handler(name, params ?? {})
-  })
+  const handler = createAntdvToolHandler({ version }, toolsHandler)
+  for (const tool of antdvMcpToolDefinitions) {
+    server.registerTool(
+      tool.name,
+      {
+        description: tool.description,
+        inputSchema: tool.inputSchema,
+        annotations: tool.annotations,
+      },
+      (params: Record<string, unknown>) => handler(tool.name, params),
+    )
+  }
 
   return server
 }

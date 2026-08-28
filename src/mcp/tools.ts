@@ -1,4 +1,4 @@
-import type { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js'
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 import type { ResolvedVersion } from '@/types.ts'
 import * as z from 'zod'
 
@@ -17,72 +17,59 @@ export const antdvMcpToolDefinitions = [
   {
     name: 'antdv_list',
     description: 'List all available antd components with names, categories, and descriptions',
-    inputSchema: z.toJSONSchema(z.object({}).strict(),
-    ) as Tool['inputSchema'],
+    inputSchema: z.object({}).strict(),
     annotations: readOnlyAnnotations,
   },
   {
     name: 'antdv_info',
     description: 'Get component API information including props, events, slots, methods, and other API information for a component.',
-    inputSchema: z.toJSONSchema(
-      z.object({
-        component: z.string().trim().describe('Component name (e.g. Button, Table)'),
-      }).strict(),
-    ) as Tool['inputSchema'],
+    inputSchema: z.object({
+      component: z.string().trim().describe('Component name (e.g. Button, Table)'),
+    }).strict(),
     annotations: readOnlyAnnotations,
   },
   {
     name: 'antdv_doc',
     description: 'Get the full markdown documentation for a component',
-    inputSchema: z.toJSONSchema(
-      z.object({
-        component: z.string().trim().describe('Component name (e.g. Button, Table)'),
-      }).strict(),
-    ) as Tool['inputSchema'],
+    inputSchema: z.object({
+      component: z.string().trim().describe('Component name (e.g. Button, Table)'),
+    }).strict(),
     annotations: readOnlyAnnotations,
   },
   {
     name: 'antdv_demo',
     description: 'Get demo source code for a component. Without a name, lists all demos; with a name, returns specific demo code',
-    inputSchema: z.toJSONSchema(
-      z.object({
-        component: z.string().trim().describe('Component name (e.g. Button, Table)'),
-        name: z.string().trim().optional().describe('Demo name to get specific demo code'),
-      }).strict(),
-    ) as Tool['inputSchema'],
+    inputSchema: z.object({
+      component: z.string().trim().describe('Component name (e.g. Button, Table)'),
+      name: z.string().trim().optional().describe('Demo name to get specific demo code'),
+    }).strict(),
     annotations: readOnlyAnnotations,
   },
   {
     name: 'antdv_token',
     description: 'Query design tokens. Without a component, returns global tokens; with a component, returns component-level tokens.',
-    inputSchema: z.toJSONSchema(
-      z.object({
-        component: z.string().trim().describe('Component name (e.g. Button, Table)'),
-      }).strict(),
-    ) as Tool['inputSchema'],
+    inputSchema: z.object({
+      component: z.string().trim().describe('Component name (e.g. Button, Table)'),
+    }).strict(),
     annotations: readOnlyAnnotations,
   },
   {
     name: 'antdv_semantic',
     description: 'Query the semantic customization structure of a component.',
-    inputSchema: z.toJSONSchema(
-      z.object({
-        component: z.string()
-          .trim()
-          .describe('Component name (e.g. Button, Table)'),
-      }).strict(),
-    ) as Tool['inputSchema'],
+    inputSchema: z.object({
+      component: z.string()
+        .trim()
+        .describe('Component name (e.g. Button, Table)'),
+    }).strict(),
     annotations: readOnlyAnnotations,
   },
   {
     name: 'antdv_design_md',
     description: 'Obtain the design language document (design.md) of the target main version: It includes the complete color, font, rounded corners, spacing and component token values for the default light theme, as well as explanations about the design principles. It can be used to understand the overall design language of the component library, or as input data for AI design tools (such as Figma Make, Stitch, etc.).',
-    inputSchema: z.toJSONSchema(
-      z.object({}).strict(),
-    ) as Tool['inputSchema'],
+    inputSchema: z.object({}).strict(),
     annotations: readOnlyAnnotations,
   },
-] as const satisfies readonly Tool[]
+] as const
 
 export type AntdvMcpToolName = typeof antdvMcpToolDefinitions[number]['name']
 export type AntdvToolStrategy = (ctx: Readonly<handlerContext>, params: Record<string, any>) => Promise<any>
