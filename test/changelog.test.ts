@@ -1,9 +1,16 @@
+import type { ResolvedVersion } from '../src/types.ts'
 import type { ComponentDiff } from '../src/types/changelog'
 import type { ChangelogFile, ComponentApiItemRecord, ComponentApiRecord, ComponentRecord } from '../src/types/components.ts'
 import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { diffComponent } from '../src/utils/api-diff.ts'
 import { loadVersionMetaData } from '../src/utils/loader.ts'
+
+vi.mock('../src/utils/loader.ts', () => ({
+  loadVersionMetaData: vi.fn(),
+}))
+
+const mockedLoadVersionMetaData = vi.mocked(loadVersionMetaData)
 
 function apiItem(
   name: string,
@@ -66,8 +73,31 @@ function snapshot(version: string, components: ComponentRecord[]): ChangelogFile
   }
 }
 
+function resolvedVersion(version: string): ResolvedVersion {
+  return {
+    version,
+    majorVersion: `v${version.split('.')[0]}`,
+  }
+}
+
+async function diffSnapshots(
+  from: ChangelogFile,
+  to: ChangelogFile,
+  component?: string,
+) {
+  mockedLoadVersionMetaData
+    .mockResolvedValueOnce(from)
+    .mockResolvedValueOnce(to)
+
+  return await diffComponent(
+    resolvedVersion(from.version),
+    resolvedVersion(to.version),
+    component,
+  )
+}
+
 describe('diffComponent', () => {
-  it('returns added, removed, and changed API items in the requested shape', () => {
+  it('returns added, removed, and changed API items in the requested shape', async () => {
     const from = snapshot('1.0.5', [
       component('Button', apiRecord({
         properties: [
@@ -85,7 +115,7 @@ describe('diffComponent', () => {
       })),
     ])
 
-    expect(diffComponent(from, to, 'button')).toEqual({
+    await expect(diffSnapshots(from, to, 'button')).resolves.toEqual({
       from: '1.0.5',
       to: '1.5.2',
       diffs: [{
@@ -113,10 +143,10 @@ describe('diffComponent', () => {
     })
   })
 
-  it('treats markdown strikethrough as a deprecation change', () => {
+  it('treats markdown strikethrough as a deprecation change', async () => {
     const fromItem = apiItem('rootStyle', 'CSSProperties', '-', 'Style on the root element')
     const toItem = apiItem('~~rootStyle~~', 'CSSProperties', '-', 'Deprecated. Use `styles.root` instead')
-    const result = diffComponent(
+    const result = await diffSnapshots(
       snapshot('1.0.5', [component('Tree', apiRecord({ properties: [fromItem] }))]),
       snapshot('1.5.2', [component('Tree', apiRecord({ properties: [toItem] }))]),
       'Tree',
@@ -135,10 +165,10 @@ describe('diffComponent', () => {
     })
   })
 
-  it('compares method signatures under the same method identity', () => {
+  it('compares method signatures under the same method identity', async () => {
     const fromItem = apiItem('scrollTo(&#123; key: Key &#125;)', '')
     const toItem = apiItem('scrollTo(&#123; key: Key, autoExpand?: boolean &#125;)', '')
-    const result = diffComponent(
+    const result = await diffSnapshots(
       snapshot('1.0.5', [component('Tree', apiRecord({ methods: [fromItem] }))]),
       snapshot('1.5.2', [component('Tree', apiRecord({ methods: [toItem] }))]),
       'Tree',
@@ -155,7 +185,7 @@ describe('diffComponent', () => {
     }])
   })
 
-  it('moves high-confidence replacements into changed as renamed', () => {
+  it('moves high-confidence replacements into changed as renamed', async () => {
     const fromItem = apiItem(
       'dropdownRender',
       '(originNode: VueNode) => VueNode',
@@ -163,7 +193,7 @@ describe('diffComponent', () => {
       'Deprecated. Use `popupRender` instead',
     )
     const toItem = apiItem('popupRender', '(originNode: VueNode) => VueNode')
-    const result = diffComponent(
+    const result = await diffSnapshots(
       snapshot('1.0.5', [component('Select', apiRecord({ properties: [fromItem] }))]),
       snapshot('1.5.2', [component('Select', apiRecord({ properties: [toItem] }))]),
       'Select',
@@ -183,10 +213,10 @@ describe('diffComponent', () => {
     })
   })
 
-  it('uses Levenshtein similarity for structurally compatible renames', () => {
+  it('uses Levenshtein similarity for structurally compatible renames', async () => {
     const fromItem = apiItem('popupRenderer', '() => VueNode')
     const toItem = apiItem('popupRender', '() => VueNode')
-    const result = diffComponent(
+    const result = await diffSnapshots(
       snapshot('1.0.5', [component('Select', apiRecord({ properties: [fromItem] }))]),
       snapshot('1.5.2', [component('Select', apiRecord({ properties: [toItem] }))]),
       'Select',
@@ -199,8 +229,8 @@ describe('diffComponent', () => {
     }])
   })
 
-  it('keeps ambiguous rename candidates as added and removed', () => {
-    const result = diffComponent(
+  it('keeps ambiguous rename candidates as added and removed', async () => {
+    const result = await diffSnapshots(
       snapshot('1.0.5', [component('Select', apiRecord({
         properties: [apiItem('optionLabel', 'string')],
       }))]),
@@ -223,8 +253,8 @@ describe('diffComponent', () => {
     })
   })
 
-  it('does not report description-only changes', () => {
-    const result = diffComponent(
+  it('does not report description-only changes', async () => {
+    const result = await diffSnapshots(
       snapshot('1.0.5', [component('Button', apiRecord({
         properties: [apiItem('disabled', 'boolean', 'false', 'Old description')],
       }))]),
@@ -237,9 +267,9 @@ describe('diffComponent', () => {
     expect(result.diffs).toEqual([])
   })
 
-  it('includes a component that only exists in one snapshot', () => {
+  it('includes a component that only exists in one snapshot', async () => {
     const added = apiItem('value', 'string')
-    const result = diffComponent(
+    const result = await diffSnapshots(
       snapshot('1.0.5', []),
       snapshot('1.5.2', [component('NewComponent', apiRecord({ properties: [added] }))]),
       'NewComponent',
@@ -253,7 +283,7 @@ describe('diffComponent', () => {
     }])
   })
 
-  it('compares every component when no component is provided', () => {
+  it('compares every component when no component is provided', async () => {
     const from = snapshot('1.0.5', [
       component('Button', apiRecord({ properties: [apiItem('legacy', 'boolean')] })),
       component('Input', apiRecord({ properties: [apiItem('value')] })),
@@ -264,7 +294,7 @@ describe('diffComponent', () => {
       component('Select', apiRecord({ properties: [apiItem('options', 'object[]')] })),
     ])
 
-    const result = diffComponent(from, to)
+    const result = await diffSnapshots(from, to)
 
     expect(result.diffs.map((diff: ComponentDiff) => diff.component)).toEqual([
       'Button',
@@ -280,8 +310,8 @@ describe('diffComponent', () => {
     })
   })
 
-  it('includes sub-component scope in API identity', () => {
-    const result = diffComponent(
+  it('includes sub-component scope in API identity', async () => {
+    const result = await diffSnapshots(
       snapshot('1.0.5', [component('Select', apiRecord(), {
         Option: apiRecord(),
       })]),
@@ -298,16 +328,19 @@ describe('diffComponent', () => {
     })
   })
 
-  it('throws when a requested component exists in neither snapshot', () => {
-    expect(() => diffComponent(
+  it('throws when a requested component exists in neither snapshot', async () => {
+    await expect(diffSnapshots(
       snapshot('1.0.5', []),
       snapshot('1.5.2', []),
       'Missing',
-    )).toThrow('Component Missing not found')
+    )).rejects.toThrow('Component Missing not found')
   })
 
   it('throws a clear error when a version major does not exist', async () => {
-    await expect(loadVersionMetaData({
+    const { loadVersionMetaData: actualLoadVersionMetaData }
+      = await vi.importActual<typeof import('../src/utils/loader.ts')>('../src/utils/loader.ts')
+
+    await expect(actualLoadVersionMetaData({
       version: '9.0.0',
       majorVersion: 'v9',
     }, join(import.meta.dirname, '..', 'data'))).rejects.toThrow('v9.0.0 not found')

@@ -5,7 +5,6 @@ import { defaultArgs } from '@/args/default.ts'
 import { resolveConfig } from '@/config.ts'
 import { diffComponent } from '@/utils/api-diff.ts'
 import { logError } from '@/utils/error.ts'
-import { loadVersionMetaData } from '@/utils/loader.ts'
 import { output } from '@/utils/output.ts'
 import { resolveVersion } from '@/utils/version.ts'
 
@@ -144,11 +143,9 @@ export default defineCommand({
     const config = resolveConfig(args)
 
     try {
-      const [fromSnapshot, toSnapshot] = await Promise.all([
-        resolveVersion({ ...config, version: args.from }).then(loadVersionMetaData),
-        resolveVersion({ ...config, version: args.to }).then(loadVersionMetaData),
-      ])
-      const result = diffComponent(fromSnapshot, toSnapshot, args.component)
+      const v1 = await resolveVersion({ ...config, version: args.from })
+      const v2 = await resolveVersion({ ...config, version: args.to })
+      const result = await diffComponent(v1, v2, args.component)
 
       output({
         json: result,
