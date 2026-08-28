@@ -1,5 +1,6 @@
 import type { ChangedApiItem, ComponentDiff, ComponentDiffResult, FlatApiItem } from '#/changelog.ts'
-import type { ChangelogFile, ComponentRecord } from '#/components.ts'
+import type { ComponentRecord } from '#/components.ts'
+import type { ResolvedVersion } from '@/types.ts'
 import {
   compareDiffItems,
   flattenComponent,
@@ -7,6 +8,7 @@ import {
   toDiffApiItem,
 } from '@/utils/api-diff-normalize.ts'
 import { matchRenamedItems } from '@/utils/api-diff-rename.ts'
+import { loadVersionMetaData } from '@/utils/loader.ts'
 
 function getItemKey(item: FlatApiItem): string {
   return `${item.scope}\0${item.category}\0${item.identity}`
@@ -118,11 +120,10 @@ function findComponent(components: ComponentRecord[], name: string): ComponentRe
   return components.find(component => component.name.toLowerCase() === normalizedName)
 }
 
-export function diffComponent(
-  fromSnapshot: ChangelogFile,
-  toSnapshot: ChangelogFile,
-  component?: string,
-): ComponentDiffResult {
+export async function diffComponent(v1: ResolvedVersion, v2: ResolvedVersion, component?: string): Promise<ComponentDiffResult> {
+  const fromSnapshot = await loadVersionMetaData(v1)
+  const toSnapshot = await loadVersionMetaData(v2)
+
   const componentNames = component
     ? [component]
     : [...new Set([

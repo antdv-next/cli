@@ -40,22 +40,25 @@ afterEach(() => {
 })
 
 describe('changelog command', () => {
-  it('starts loading both snapshots before either one resolves', async () => {
-    const pending = new Map<string, (snapshot: ChangelogFile) => void>()
-    mockedLoadVersionMetaData.mockImplementation((version) => {
-      return new Promise(resolve => pending.set(version.version, resolve))
-    })
+  it('resolves both versions and loads their snapshots', async () => {
+    mockedLoadVersionMetaData.mockImplementation(async version => emptySnapshot(version.version))
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-    const execution = runCommand(changelogCommand, {
+
+    await runCommand(changelogCommand, {
       rawArgs: ['1.0.5', '1.5.2', '--format', 'json'],
     })
 
-    await vi.waitFor(() => expect(mockedLoadVersionMetaData).toHaveBeenCalledTimes(2))
-    expect([...pending.keys()]).toEqual(['1.0.5', '1.5.2'])
-
-    pending.get('1.0.5')!(emptySnapshot('1.0.5'))
-    pending.get('1.5.2')!(emptySnapshot('1.5.2'))
-    await execution
+    expect(mockedResolveVersion).toHaveBeenCalledTimes(2)
+    expect(mockedResolveVersion).toHaveBeenNthCalledWith(1, expect.objectContaining({ version: '1.0.5' }))
+    expect(mockedResolveVersion).toHaveBeenNthCalledWith(2, expect.objectContaining({ version: '1.5.2' }))
+    expect(mockedLoadVersionMetaData).toHaveBeenNthCalledWith(1, {
+      version: '1.0.5',
+      majorVersion: 'v1',
+    })
+    expect(mockedLoadVersionMetaData).toHaveBeenNthCalledWith(2, {
+      version: '1.5.2',
+      majorVersion: 'v1',
+    })
 
     expect(consoleSpy).toHaveBeenCalledWith(JSON.stringify({
       from: '1.0.5',
