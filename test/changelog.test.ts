@@ -76,7 +76,7 @@ function snapshot(version: string, components: ComponentRecord[]): ChangelogFile
 function resolvedVersion(version: string): ResolvedVersion {
   return {
     version,
-    majorVersion: `v${version.split('.')[0]}`,
+    majorVersion: `v${Number(version.split('.')[0])}`,
   }
 }
 
