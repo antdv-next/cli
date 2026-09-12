@@ -161,7 +161,7 @@ describe('upgrade command', () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
     await runCommand(upgradeCommand, {
-      rawArgs: ['--format', 'json'],
+      rawArgs: ['--format', 'json', '--package-manager', 'npm'],
     })
 
     expect(mocks.x).toHaveBeenNthCalledWith(1, 'npm', expect.any(Array), expect.objectContaining({
