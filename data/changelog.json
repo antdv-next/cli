@@ -1,5 +1,327 @@
 [
   {
+    "version": "1.5.6",
+    "date": "2026-09-25",
+    "changelog": [
+      {
+        "component": "time-picker, date-picker",
+        "type": "feat",
+        "description": "keyboard navigation in the time panel — Arrow Up / Down move the cursor and skip disabled cells, Enter / Space select it; time columns and cells get `listbox` / `option` semantics with localized labels (via `@v-c/picker` 1.5.0)"
+      },
+      {
+        "component": "listy",
+        "type": "feat",
+        "description": "a function `rowKey` receives the item's index in `items` as its second argument; grouping does not change it (via `@v-c/listy` 1.2.0)"
+      },
+      {
+        "component": "menu",
+        "type": "feat",
+        "description": "export the `MenuInfo` and `SelectInfo` event types ([#961](https://github.com/antdv-next/antdv-next/pull/961), [#693](https://github.com/antdv-next/antdv-next/issues/693))"
+      },
+      {
+        "component": "trigger",
+        "type": "fix",
+        "description": "with a global `transition-duration` on the page (e.g. the common `prefers-reduced-motion` reset), right- or bottom-aligned popups (a `bottomRight` Dropdown, a `top` Tooltip, …) no longer paint their first frame at the viewport edge; the Tooltip frame could also make the page briefly scrollable (via `@v-c/trigger` 1.1.5)"
+      },
+      {
+        "component": "dropdown",
+        "type": "fix",
+        "description": "pressing Tab while the popup is open moves focus into the menu instead of closing it, also when the menu is wrapped in another element; `autoFocus` now works and focuses without scrolling the page, matching antd (via `@v-c/dropdown` 1.1.1)"
+      },
+      {
+        "component": "menu",
+        "type": "fix",
+        "description": "calling `focus()` through the ref no longer throws (via `@v-c/menu` 1.4.1)"
+      },
+      {
+        "component": "date-picker",
+        "type": "fix",
+        "description": "the default dayjs config loads in native Node ESM (e.g. when SSR externalizes dependencies) instead of failing with `ERR_MODULE_NOT_FOUND` (via `@v-c/picker` 1.5.0)"
+      },
+      {
+        "component": "collapse",
+        "type": "fix",
+        "description": "the `v-model:active-key` binding updates as expected ([#960](https://github.com/antdv-next/antdv-next/pull/960))"
+      },
+      {
+        "component": "faq",
+        "type": "docs",
+        "description": "add [\"Why do popups have no animation, or flash at the viewport edge before settling?\"](/docs/vue/faq#popup-animation-missing-with-reduced-motion), covering how the reduced-motion reset affects popups, the OS settings that trigger it, how to check it and how to fix it"
+      },
+      {
+        "component": "deps",
+        "type": "chore",
+        "description": "upgrade `@v-c/trigger` 1.1.5, `@v-c/util` 1.3.1, `@v-c/menu` 1.4.1, `@v-c/dropdown` 1.1.1, `@v-c/listy` 1.2.0 and `@v-c/picker` 1.5.0. In `@v-c/util`, `dynamicCSS` no longer throws when the page has no `<head>` / `<body>`, and `set` no longer mutates the source object when removing a nested value"
+      },
+      {
+        "component": "build",
+        "type": "chore",
+        "description": "the UMD bundles now read the global names of `dayjs` and its plugins and locales from dayjs's own UMD files, so they always match the dayjs builds on the CDN (`@v-c/picker` 1.5.0 imports dayjs plugins with a `.js` extension); the post-build browser bundle check verifies the global every external dependency of the UMD bundles reads, and the build fails on an external without a configured global instead of letting the bundler guess its name"
+      }
+    ]
+  },
+  {
+    "version": "1.5.5",
+    "date": "2026-09-25",
+    "changelog": [
+      {
+        "component": "table",
+        "type": "feat",
+        "description": "columns support `resizable` drag-to-resize with a new `resizeColumn` event `(width, column, columnKey)`, using `minWidth` as the lower bound; group columns do not accept `resizable` and are resized through their leaf columns ([#327](https://github.com/antdv-next/antdv-next/issues/327))"
+      },
+      {
+        "component": "tabs",
+        "type": "feat",
+        "description": "add `scrollPosition` to control how the active tab is scrolled into view when switching ([#954](https://github.com/antdv-next/antdv-next/pull/954), [#916](https://github.com/antdv-next/antdv-next/pull/916), #39433)"
+      },
+      {
+        "component": "message",
+        "type": "feat",
+        "description": "add the `stack` option, and fix semantic `list` class / style forwarding and the reactivity of holder config ([#927](https://github.com/antdv-next/antdv-next/pull/927))"
+      },
+      {
+        "component": "splitter",
+        "type": "feat",
+        "description": "add `collapsible.motion`; when enabled, collapsing is animated with the global `motionDurationSlow` and `motionEaseInOut` tokens ([#913](https://github.com/antdv-next/antdv-next/pull/913))"
+      },
+      {
+        "component": "cssinjs",
+        "type": "feat",
+        "description": "`genStyleHooks` gains an `extraCssVarPrefixCls` option that takes an array or `({ prefixCls, rootCls }) => string[]` to inject component CSS variables for extra classes; the function form is re-evaluated when `prefixCls` changes (ant-design/cssinjs-util#36, #37)"
+      },
+      {
+        "component": "table",
+        "type": "fix",
+        "description": "kebab-case `<a-table-column>` attributes such as `data-index` and `min-width` are now resolved instead of rendering empty cells; a bare `resizable` attribute is treated as `true` ([#945](https://github.com/antdv-next/antdv-next/pull/945))"
+      },
+      {
+        "component": "table",
+        "type": "fix",
+        "description": "with `preserveSelectedRowKeys`, selecting across pages no longer drops initially selected records from `rowSelection.onChange` ([#881](https://github.com/antdv-next/antdv-next/pull/881)); support semantic pagination styling through Table's `pagination.classes` / `pagination.styles` ([#849](https://github.com/antdv-next/antdv-next/pull/849)); RTL now comes from ConfigProvider `direction` only, matching ant-design ([#907](https://github.com/antdv-next/antdv-next/pull/907)); columns hidden by `responsive` still apply a controlled `filteredValue` ([#886](https://github.com/antdv-next/antdv-next/pull/886), #59198)"
+      },
+      {
+        "component": "card",
+        "type": "fix",
+        "description": "rename the embedded Tabs class to `ant-card-head-tabs` so style overrides apply again ([#937](https://github.com/antdv-next/antdv-next/pull/937)); semantic `classes` / `styles` functions receive the resolved `variant` ([#939](https://github.com/antdv-next/antdv-next/pull/939)); the `tabBarExtraContent` slot takes priority over the prop of the same name ([#941](https://github.com/antdv-next/antdv-next/pull/941))"
+      },
+      {
+        "component": "avatar",
+        "type": "fix",
+        "description": "fall back to `icon` or the default slot when the image fails to load ([#889](https://github.com/antdv-next/antdv-next/pull/889)), and reset that fallback when only `srcSet` changes ([#908](https://github.com/antdv-next/antdv-next/pull/908)); emit `click` when clicked ([#906](https://github.com/antdv-next/antdv-next/pull/906)); expose `nativeElement` via ref and export an `AvatarRef` type ([#909](https://github.com/antdv-next/antdv-next/pull/909))"
+      },
+      {
+        "component": "badge",
+        "type": "fix",
+        "description": "the horizontal `offset` is no longer flipped under RTL ([#912](https://github.com/antdv-next/antdv-next/pull/912)); fractional horizontal offsets are no longer truncated ([#948](https://github.com/antdv-next/antdv-next/pull/948), #59314); hide the badge when `text=\"0\"` and `showZero` is not set ([#911](https://github.com/antdv-next/antdv-next/pull/911))"
+      },
+      {
+        "component": "cascader",
+        "type": "fix",
+        "description": "make the `loadingIcon` prop work and support a `loadingIcon` slot ([#946](https://github.com/antdv-next/antdv-next/pull/946)); make the top-level `clearIcon` take effect ([#953](https://github.com/antdv-next/antdv-next/pull/953)); stop `dropdownStyle` leaking into DOM attributes ([#952](https://github.com/antdv-next/antdv-next/pull/952))"
+      },
+      {
+        "component": "alert",
+        "type": "fix",
+        "description": "the `icon` slot is honored instead of always falling back to the default icon ([#898](https://github.com/antdv-next/antdv-next/pull/898)); the close animation plays with a custom `prefixCls` ([#899](https://github.com/antdv-next/antdv-next/pull/899))"
+      },
+      {
+        "component": "breadcrumb",
+        "type": "fix",
+        "description": "emit `clickItem` when an item is clicked ([#928](https://github.com/antdv-next/antdv-next/pull/928)); a menu item's `label` takes priority over `title` ([#929](https://github.com/antdv-next/antdv-next/pull/929))"
+      },
+      {
+        "component": "input",
+        "type": "fix",
+        "description": "no border flash when switching away from the borderless variant at runtime ([#862](https://github.com/antdv-next/antdv-next/pull/862), #59269); restore the Input.Password visibility-toggle icon styles ([#938](https://github.com/antdv-next/antdv-next/pull/938), #57271)"
+      },
+      {
+        "component": "input-number",
+        "type": "fix",
+        "description": "align `allowClear` behavior and clear-icon styles with Input, support ConfigProvider config, and fix the layout with controls, suffix and spinner mode ([#876](https://github.com/antdv-next/antdv-next/pull/876), #59251)"
+      },
+      {
+        "component": "date-picker, time-picker",
+        "type": "fix",
+        "description": "the `#prefix` slot now renders; complete RangePicker slot types and export `TimeRangePickerSlots`, and warn on the deprecated `addon` slot as well ([#863](https://github.com/antdv-next/antdv-next/pull/863))"
+      },
+      {
+        "component": "upload",
+        "type": "fix",
+        "description": "`customRequest` and `defaultRequest` types allow returning an `{ abort }` handle (#59382); file names are no longer focusable buttons when no preview handler is registered ([#924](https://github.com/antdv-next/antdv-next/pull/924), #59295); `Upload.Dragger` keeps the height from `style` when `height` is unset and applies a numeric `height` in pixels ([#923](https://github.com/antdv-next/antdv-next/pull/923), #59319)"
+      },
+      {
+        "component": "transfer",
+        "type": "fix",
+        "description": "with search enabled, Shift selection only applies to filtered items ([#947](https://github.com/antdv-next/antdv-next/pull/947), #59348); clear stale selections when `dataSource` keys change type ([#886](https://github.com/antdv-next/antdv-next/pull/886), #59166); the `footer` callback and slot always receive `{ direction }` ([#922](https://github.com/antdv-next/antdv-next/pull/922), #59303)"
+      },
+      {
+        "component": "tree",
+        "type": "fix",
+        "description": "DirectoryTree Shift range selection skips `disabled` and `selectable: false` nodes (#59341)"
+      },
+      {
+        "component": "typography",
+        "type": "fix",
+        "description": "when editable with a `triggerType` that includes `'text'`, clicking the text starts editing and still emits `click` (#59325)"
+      },
+      {
+        "component": "checkbox, radio",
+        "type": "fix",
+        "description": "CheckboxGroup no longer includes removed options' values in `change` / `update:value`, and keeps registration in sync when `value` or `skipGroup` changes ([#894](https://github.com/antdv-next/antdv-next/pull/894)); Checkbox and Radio `id` and `name` now reach the native `<input>` and `blur` is emitted, so Form `validateTrigger: 'blur'` works (via `@v-c/checkbox` 1.0.2)"
+      },
+      {
+        "component": "",
+        "type": "fix",
+        "description": "Result, Message, Notification, Avatar and Modal keep a numeric `0` as custom content instead of falling back to the built-in icon ([#917](https://github.com/antdv-next/antdv-next/pull/917), #59153); Form.Item `extra` ([#920](https://github.com/antdv-next/antdv-next/pull/920), #59289) and Descriptions `title` / `extra` ([#919](https://github.com/antdv-next/antdv-next/pull/919), #59125) render when they are `0`"
+      },
+      {
+        "component": "",
+        "type": "fix",
+        "description": "string or array `style` values no longer fail or throw in Avatar, Modal, Tree, Transfer and Typography ([#943](https://github.com/antdv-next/antdv-next/pull/943)); FloatButton, Listy and Tour widen their `style` type to `StyleValue` ([#955](https://github.com/antdv-next/antdv-next/pull/955))"
+      },
+      {
+        "component": "rate, carousel, collapse",
+        "type": "fix",
+        "description": "Rate `size` ([#902](https://github.com/antdv-next/antdv-next/pull/902)), Carousel `effect` ([#942](https://github.com/antdv-next/antdv-next/pull/942)) and the Collapse panel `content` ([#959](https://github.com/antdv-next/antdv-next/pull/959)) no longer leak into DOM attributes; Rate `direction` and Carousel `verticalSwiping` are removed from the types, since they always come from ConfigProvider and `vertical` respectively (#59379, #59366)"
+      },
+      {
+        "component": "color-picker",
+        "type": "fix",
+        "description": "stop mutating user-provided presets while rendering ([#857](https://github.com/antdv-next/antdv-next/pull/857), #59272); when `disabled`, the clear button is no longer clickable, focusable or hover-highlighted ([#886](https://github.com/antdv-next/antdv-next/pull/886), #59164)"
+      },
+      {
+        "component": "notification",
+        "type": "fix",
+        "description": "`list` / `listContent` semantic classes and styles configured via `useNotification` and ConfigProvider are now applied ([#936](https://github.com/antdv-next/antdv-next/pull/936))"
+      },
+      {
+        "component": "button",
+        "type": "fix",
+        "description": "`variant=\"solid\"` renders solid primary again instead of falling back to outlined ([#934](https://github.com/antdv-next/antdv-next/pull/934))"
+      },
+      {
+        "component": "tabs",
+        "type": "fix",
+        "description": "Tabs inherits ConfigProvider `direction`, fixing RTL layout inside `App` ([#884](https://github.com/antdv-next/antdv-next/pull/884))"
+      },
+      {
+        "component": "tour",
+        "type": "fix",
+        "description": "button callbacks receive the click event ([#949](https://github.com/antdv-next/antdv-next/pull/949), #59332)"
+      },
+      {
+        "component": "anchor",
+        "type": "fix",
+        "description": "fix external-link navigation, per-link `targetOffset` highlighting, and competing scroll animations on repeated clicks ([#900](https://github.com/antdv-next/antdv-next/pull/900))"
+      },
+      {
+        "component": "auto-complete",
+        "type": "fix",
+        "description": "`focus()`, `blur()` and `scrollTo()` are available via ref ([#905](https://github.com/antdv-next/antdv-next/pull/905))"
+      },
+      {
+        "component": "splitter",
+        "type": "fix",
+        "description": "panel sizes respect `min` / `max` again after the container is resized ([#886](https://github.com/antdv-next/antdv-next/pull/886), #59084)"
+      },
+      {
+        "component": "skeleton",
+        "type": "fix",
+        "description": "numeric element sizes are applied in pixels ([#865](https://github.com/antdv-next/antdv-next/pull/865))"
+      },
+      {
+        "component": "statistic",
+        "type": "fix",
+        "description": "format correctly when `precision` is `NaN`, and do not throw on a non-function `valueRender` ([#933](https://github.com/antdv-next/antdv-next/pull/933))"
+      },
+      {
+        "component": "affix",
+        "type": "fix",
+        "description": "fix the always-`false` style comparison in `lazyUpdatePosition` so scroll frames skip redundant measurement ([#896](https://github.com/antdv-next/antdv-next/pull/896))"
+      },
+      {
+        "component": "theme",
+        "type": "fix",
+        "description": "`fontHeight`, `fontHeightSM` and `fontHeightLG` follow custom `fontSize` / `lineHeight` tokens ([#918](https://github.com/antdv-next/antdv-next/pull/918), #59298)"
+      },
+      {
+        "component": "tooltip",
+        "type": "fix",
+        "description": "narrow the `motion` type to the supported `{ name?: string }` ([#926](https://github.com/antdv-next/antdv-next/pull/926), #59288)"
+      },
+      {
+        "component": "drawer",
+        "type": "fix",
+        "description": "using the deprecated `destroyOnClose` now warns and points to `destroyOnHidden` ([#921](https://github.com/antdv-next/antdv-next/pull/921), #59299); correct misdirected deprecation warnings and annotations in Drawer, Cascader, Select, TreeSelect, Button and Slider ([#935](https://github.com/antdv-next/antdv-next/pull/935)); remove leftover upstream version numbers and React references from warnings and comments ([#944](https://github.com/antdv-next/antdv-next/pull/944))"
+      },
+      {
+        "component": "float-button, mentions",
+        "type": "fix",
+        "description": "mark `BackTopProps` and Mentions `OptionProps` as deprecated and add a `FloatButtonBackTopProps` alias ([#886](https://github.com/antdv-next/antdv-next/pull/886), #58949)"
+      },
+      {
+        "component": "locale",
+        "type": "fix",
+        "description": "fill in missing DatePicker placeholders and Carousel accessibility labels for multiple locales ([#950](https://github.com/antdv-next/antdv-next/pull/950), #59351)"
+      },
+      {
+        "component": "cssinjs",
+        "type": "fix",
+        "description": "with CSP enabled, component CSS variable style tags now carry the `nonce` too (ant-design/cssinjs-util#38)"
+      },
+      {
+        "component": "",
+        "type": "docs",
+        "description": "zh-CN and en-US docs now share the same heading structure and anchors; zh-CN headings declare the same ids as their en-US counterparts, and search-index anchors match the rendered pages ([#957](https://github.com/antdv-next/antdv-next/pull/957))"
+      },
+      {
+        "component": "",
+        "type": "docs",
+        "description": "normalize semantic class terminology and Semantic DOM headings ([#874](https://github.com/antdv-next/antdv-next/pull/874), [#872](https://github.com/antdv-next/antdv-next/pull/872)); normalize component version markers and remove leftover upstream version references ([#877](https://github.com/antdv-next/antdv-next/pull/877), [#895](https://github.com/antdv-next/antdv-next/pull/895)); fix semantic preview highlights, borders, placeholders, clear buttons and popup coverage ([#914](https://github.com/antdv-next/antdv-next/pull/914), [#871](https://github.com/antdv-next/antdv-next/pull/871), [#870](https://github.com/antdv-next/antdv-next/pull/870), [#869](https://github.com/antdv-next/antdv-next/pull/869), [#904](https://github.com/antdv-next/antdv-next/pull/904), [#856](https://github.com/antdv-next/antdv-next/pull/856), [#867](https://github.com/antdv-next/antdv-next/pull/867)); complete the Mentions API docs and popup semantic preview ([#910](https://github.com/antdv-next/antdv-next/pull/910)); document how Tooltip realigns after layout changes ([#925](https://github.com/antdv-next/antdv-next/pull/925), #59304)"
+      },
+      {
+        "component": "",
+        "type": "docs",
+        "description": "the Button loading demo shows an end icon ([#873](https://github.com/antdv-next/antdv-next/pull/873)), the icon demo shows both the `icon` prop and the `#icon` slot ([#930](https://github.com/antdv-next/antdv-next/pull/930)), and the danger demo is reworded ([#890](https://github.com/antdv-next/antdv-next/pull/890)); each group in the Checkbox group demo switches independently ([#887](https://github.com/antdv-next/antdv-next/pull/887)); QRCode demos use the project logo ([#878](https://github.com/antdv-next/antdv-next/pull/878)); Table notes that resizable columns need numeric widths"
+      },
+      {
+        "component": "",
+        "type": "docs",
+        "description": "correct the Divider `plain` default ([#861](https://github.com/antdv-next/antdv-next/pull/861)) and the Masonry en-US frontmatter that broke the search-index build ([#891](https://github.com/antdv-next/antdv-next/pull/891)); the components overview shows Not Found when a search has no results ([#868](https://github.com/antdv-next/antdv-next/pull/868)) and the zh-CN overview gets its border beam effect back ([#866](https://github.com/antdv-next/antdv-next/pull/866)); extract document heading metadata ([#864](https://github.com/antdv-next/antdv-next/pull/864)); wrap the demo container in ThemeProvider to silence an injection warning ([#882](https://github.com/antdv-next/antdv-next/pull/882))"
+      },
+      {
+        "component": "sync",
+        "type": "chore",
+        "description": "advance ant-design upstream tracking to master `2a04506177` after **6.6.5**, porting the fixes from 6.6.4, 6.6.5 and later that apply to the Vue implementation; start tracking `ant-design/cssinjs-util`, synced to v2.1.2"
+      },
+      {
+        "component": "deps",
+        "type": "chore",
+        "description": "release `@antdv-next/cssinjs` 1.0.7 with the `extraCssVarPrefixCls` and CSP `nonce` changes above"
+      },
+      {
+        "component": "deps",
+        "type": "chore",
+        "description": "upgrade `@v-c/*`, including `@v-c/tabs` 1.4.2 (`scrollPosition`), `@v-c/table` 1.3.3 (column resizing), `@v-c/checkbox` 1.0.2, `@v-c/slider` 1.1.4 (pushable fixes), `@v-c/virtual-list` 1.1.2 (Tree virtual scroll no longer keeps auto-scrolling after a drag ends), `@v-c/mentions` 1.2.3 (default filtering restored when `filterOption` is not passed), `@v-c/trigger` 1.1.4 (popups realign when their target moves), `@v-c/mutate-observer` 1.0.3 and `@v-c/util` 1.3.0 ([#916](https://github.com/antdv-next/antdv-next/pull/916), [#932](https://github.com/antdv-next/antdv-next/pull/932))"
+      },
+      {
+        "component": "build",
+        "type": "chore",
+        "description": "upgrade `vite-plugin-tsx-resolve-types` to 1.1.2 and enable `ignoreTypes` so event-handler types are no longer resolved into runtime props; upgrade UnoCSS to 66.10.5 ([#956](https://github.com/antdv-next/antdv-next/pull/956))"
+      },
+      {
+        "component": "",
+        "type": "ci",
+        "description": "the size report compares only the final `antd.js` / `antd.esm.js` bundles and runs on every PR ([#860](https://github.com/antdv-next/antdv-next/pull/860)); whitelist PR title types for the semantic check ([#931](https://github.com/antdv-next/antdv-next/pull/931))"
+      },
+      {
+        "component": "",
+        "type": "test",
+        "description": "adapt the cssinjs hydration test to Vitest 5; remove the Calendar lunar test that asserted on demo source text ([#903](https://github.com/antdv-next/antdv-next/pull/903))"
+      }
+    ]
+  },
+  {
     "version": "1.5.4",
     "date": "2026-09-10",
     "changelog": [
