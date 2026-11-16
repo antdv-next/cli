@@ -1,5 +1,161 @@
 [
   {
+    "version": "1.8.2",
+    "date": "2026-11-16",
+    "changelog": [
+      {
+        "component": "config-provider",
+        "type": "feat",
+        "description": "add the `affix` config for a global `class` and `style` on Affix ([#1098](https://github.com/antdv-next/antdv-next/pull/1098))"
+      },
+      {
+        "component": "config-provider",
+        "type": "fix",
+        "description": "the `qrcode` and `borderBeam` configs are applied ([#1102](https://github.com/antdv-next/antdv-next/pull/1102))"
+      },
+      {
+        "component": "watermark",
+        "type": "fix",
+        "description": "consume `class` and `style` from the ConfigProvider `watermark` config ([#1090](https://github.com/antdv-next/antdv-next/pull/1090)); `remove` is declared as an emit instead of an `onRemove` prop, and listeners bound dynamically are called too ([#1092](https://github.com/antdv-next/antdv-next/pull/1092))"
+      },
+      {
+        "component": "upload",
+        "type": "fix",
+        "description": "consume `accept` from the ConfigProvider `upload` config ([#1086](https://github.com/antdv-next/antdv-next/pull/1086)); a custom action icon's `onClick` no longer fires twice ([#1089](https://github.com/antdv-next/antdv-next/pull/1089))"
+      },
+      {
+        "component": "anchor",
+        "type": "fix",
+        "description": "jump to the target without the scroll animation when the user prefers reduced motion ([#1101](https://github.com/antdv-next/antdv-next/pull/1101))"
+      },
+      {
+        "component": "table",
+        "type": "fix",
+        "description": "scrolling back to the first row after paging, sorting or filtering skips the animation when the user prefers reduced motion (#59864); active sorters are refreshed when `columns` change (#59763)"
+      },
+      {
+        "component": "card",
+        "type": "fix",
+        "description": "a Button with `href` inside `actions` keeps its icon spacing and button look instead of being styled as a plain link (#59726)"
+      },
+      {
+        "component": "date-picker, time-picker",
+        "type": "fix",
+        "description": "time panel cells are centered and no longer clipped beside the scrollbar ([#1087](https://github.com/antdv-next/antdv-next/pull/1087)); `styles.popup.item` can override their text alignment (#59828)"
+      },
+      {
+        "component": "alert",
+        "type": "fix",
+        "description": "hide the close button when `closable` is `null` ([#1099](https://github.com/antdv-next/antdv-next/pull/1099)); the `filled` variant has no border ([#1100](https://github.com/antdv-next/antdv-next/pull/1100))"
+      },
+      {
+        "component": "affix",
+        "type": "fix",
+        "description": "rebind the scroll listeners when the resolved `target` changes ([#1097](https://github.com/antdv-next/antdv-next/pull/1097))"
+      },
+      {
+        "component": "z-index",
+        "type": "fix",
+        "description": "recalculate the z-index when a custom `zIndex` is removed ([#1096](https://github.com/antdv-next/antdv-next/pull/1096))"
+      },
+      {
+        "component": "modal",
+        "type": "fix",
+        "description": "stop the theme watcher when a `Modal.confirm` created by the static method is destroyed, and refresh an open confirm when the theme changes ([#1093](https://github.com/antdv-next/antdv-next/pull/1093))"
+      },
+      {
+        "component": "notification",
+        "type": "fix",
+        "description": "a changed global config is applied to the holder that is already mounted ([#1095](https://github.com/antdv-next/antdv-next/pull/1095))"
+      },
+      {
+        "component": "image",
+        "type": "fix",
+        "description": "merge the preview slots without mutating the computed config ([#1091](https://github.com/antdv-next/antdv-next/pull/1091))"
+      },
+      {
+        "component": "typography",
+        "type": "fix",
+        "description": "pass `id` through to the root element ([#1082](https://github.com/antdv-next/antdv-next/pull/1082)); a canceled edit is no longer saved on blur"
+      },
+      {
+        "component": "empty",
+        "type": "fix",
+        "description": "the user `class` is no longer duplicated on the root element ([#1103](https://github.com/antdv-next/antdv-next/pull/1103))"
+      },
+      {
+        "component": "tag",
+        "type": "fix",
+        "description": "forward the `role` attribute to the CheckableTagGroup root ([#1088](https://github.com/antdv-next/antdv-next/pull/1088))"
+      },
+      {
+        "component": "breadcrumb",
+        "type": "fix",
+        "description": "correct the RTL class name ([#1083](https://github.com/antdv-next/antdv-next/pull/1083))"
+      },
+      {
+        "component": "locale",
+        "type": "fix",
+        "description": "complete and polish the Indonesian (id_ID) translations (#59807); correct the Uzbek (uz_UZ) translations (#59876)"
+      },
+      {
+        "component": "listy",
+        "type": "docs",
+        "description": "clarify that `classes` and `styles` accept callbacks (#59814)"
+      },
+      {
+        "component": "tag",
+        "type": "docs",
+        "description": "correct the `closeIcon` slot description ([#1088](https://github.com/antdv-next/antdv-next/pull/1088))"
+      },
+      {
+        "component": "site",
+        "type": "docs",
+        "description": "add the mobile docs entry to the header and footer"
+      },
+      {
+        "component": "card",
+        "type": "docs",
+        "description": "the button alignment debug demo covers a Button with `href` inside `actions` (#59726)"
+      },
+      {
+        "component": "form",
+        "type": "refactor",
+        "description": "remove the unreachable debounce branch from the form item validation status (#59832)"
+      },
+      {
+        "component": "watermark",
+        "type": "refactor",
+        "description": "remove the unused animation frame ref (#59797)"
+      },
+      {
+        "component": "input",
+        "type": "test",
+        "description": "cover Input.OTP during IME composition (#58762)"
+      },
+      {
+        "component": "sync",
+        "type": "chore",
+        "description": "advance ant-design upstream tracking to `608df2cf27` and cssinjs upstream tracking to `2f3ff72`"
+      },
+      {
+        "component": "deps",
+        "type": "chore",
+        "description": "upgrade `@antdv-next/cssinjs` 1.2.0, where `useCSSVarRegister` accepts `preserve` to keep the original value of selected keys instead of turning them into CSS variables; `@v-c/menu` 1.4.7, which aligns the disabled submenu behavior with `@rc-component/menu` 1.6.2 (#59826); `@v-c/util` 1.4.1, `@v-c/color-picker` 1.0.9 and `@v-c/checkbox` 1.0.3"
+      },
+      {
+        "component": "",
+        "type": "ci",
+        "description": "`@antdv-next/cssinjs` is set up for npm trusted publishing; 1.2.0 is its first version published automatically by the Release workflow, with provenance"
+      },
+      {
+        "component": "deploy",
+        "type": "ci",
+        "description": "fix the docs site deployment being cancelled during a release. The test run started by a version tag no longer cancels the deployment in progress for `main`, and only a push to `main` triggers a deployment"
+      }
+    ]
+  },
+  {
     "version": "1.8.1",
     "date": "2026-11-06",
     "changelog": [
