@@ -23,7 +23,7 @@ Code Agent（Claude Code、Codex、Gemini CLI）在拥有即时 API 数据访问
 正是为此而生 — antdv next 的每个 Prop、Token、Demo 和 Changelog 条目，本地打包，毫秒级查询。
 
 ```bash
-npx skills add @antdv-next/cli # install as an agent skill
+npx skills add antdv-next/cli # install as an agent skill
 ```
 
 <br>
@@ -64,7 +64,7 @@ npx skills add antdv-next/cli
 
 或者直接告诉你的 Code Agent：
 
-> 安装 `@antdv-next/cli` 和 `antdv-next/cli` 的 antdv next skill
+> 安装 `@antdv-next/cli` 的 antdv next skill
 
 Agent 会自动完成 `npm install`、`npx skills add`，并开始使用 CLI。
 
